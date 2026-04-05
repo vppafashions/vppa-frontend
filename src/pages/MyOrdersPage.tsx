@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FileTextIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getUserOrders, type OrderDocument } from '../lib/orders';
+import { getUserOrders, type OrderDocument, type StatusTimeline } from '../lib/orders';
 import { openInvoicePrint } from '../lib/invoice';
 
 interface OrderItem {
@@ -49,11 +49,30 @@ export function MyOrdersPage() {
     }
   };
 
+  const parseTimeline = (timelineStr?: string): StatusTimeline => {
+    if (!timelineStr) return {};
+    try {
+      return JSON.parse(timelineStr);
+    } catch {
+      return {};
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-IN', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
+    });
+  };
+
+  const formatDateTime = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
@@ -125,6 +144,101 @@ export function MyOrdersPage() {
                   {/* Expanded Details */}
                   {isExpanded && (
                     <div className="px-6 pb-6 border-t border-border/20 pt-4 space-y-4">
+                      {/* Status Timeline */}
+                      {(() => {
+                        const timeline = parseTimeline(order.statusTimeline);
+                        const steps: { key: string; label: string }[] = [
+                          { key: 'pending', label: 'Order Placed' },
+                          { key: 'confirmed', label: 'Confirmed' },
+                          { key: 'shipped', label: 'Shipped' },
+                          { key: 'delivered', label: 'Delivered' },
+                        ];
+                        if (order.status === 'cancelled' || timeline.cancelled) {
+                          steps.push({ key: 'cancelled', label: 'Cancelled' });
+                        }
+                        const currentIndex = steps.findIndex(s => s.key === order.status);
+                        const hasAnyTimestamp = Object.keys(timeline).length > 0;
+
+                        return (
+                          <div>
+                            <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-3">
+                              Order Status
+                            </h3>
+                            <div className="relative">
+                              {steps.map((step, idx) => {
+                                const ts = timeline[step.key];
+                                const isCompleted = idx <= currentIndex;
+                                const isCurrent = idx === currentIndex;
+                                const isLast = idx === steps.length - 1;
+                                const isCancelled = step.key === 'cancelled';
+
+                                return (
+                                  <div key={step.key} className="flex gap-3">
+                                    {/* Vertical line + dot */}
+                                    <div className="flex flex-col items-center">
+                                      <div
+                                        className={`w-3 h-3 rounded-full border-2 flex-shrink-0 ${
+                                          isCancelled && isCompleted
+                                            ? 'border-red-500 bg-red-500'
+                                            : isCompleted
+                                            ? 'border-foreground bg-foreground'
+                                            : 'border-muted-foreground/30 bg-transparent'
+                                        }`}
+                                      />
+                                      {!isLast && (
+                                        <div
+                                          className={`w-0.5 h-8 ${
+                                            isCompleted && idx < currentIndex
+                                              ? 'bg-foreground'
+                                              : 'bg-muted-foreground/20'
+                                          }`}
+                                        />
+                                      )}
+                                    </div>
+                                    {/* Label + timestamp */}
+                                    <div className={`pb-4 ${!isCompleted ? 'opacity-40' : ''}`}>
+                                      <p className={`text-sm ${isCurrent ? 'font-semibold' : 'font-medium'} ${isCancelled && isCompleted ? 'text-red-600' : ''}`}>
+                                        {step.label}
+                                      </p>
+                                      {ts ? (
+                                        <p className="text-xs text-muted-foreground">
+                                          {formatDateTime(ts)}
+                                        </p>
+                                      ) : hasAnyTimestamp && step.key === 'pending' ? (
+                                        <p className="text-xs text-muted-foreground">
+                                          {formatDateTime(order.$createdAt)}
+                                        </p>
+                                      ) : null}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Tracking Information */}
+                      {order.trackingNumber && (
+                        <div className="bg-accent/10 p-4 border border-border/30 rounded-lg">
+                          <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
+                            Tracking Information
+                          </h3>
+                          <div className="text-sm space-y-1">
+                            {order.courier && (
+                              <p>
+                                <span className="text-muted-foreground">Courier:</span>{' '}
+                                <span className="font-medium">{order.courier}</span>
+                              </p>
+                            )}
+                            <p>
+                              <span className="text-muted-foreground">Tracking #:</span>{' '}
+                              <span className="font-mono font-medium">{order.trackingNumber}</span>
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Items */}
                       <div>
                         <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Items</h3>
@@ -153,27 +267,6 @@ export function MyOrdersPage() {
                             Shipping Address
                           </h3>
                           <p className="text-sm">{order.address}</p>
-                        </div>
-                      )}
-
-                      {/* Tracking */}
-                      {order.trackingNumber && (
-                        <div className="bg-accent/10 p-4 border border-border/30 rounded-lg">
-                          <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
-                            Tracking Information
-                          </h3>
-                          <div className="text-sm space-y-1">
-                            {order.courier && (
-                              <p>
-                                <span className="text-muted-foreground">Courier:</span>{' '}
-                                {order.courier}
-                              </p>
-                            )}
-                            <p>
-                              <span className="text-muted-foreground">Tracking #:</span>{' '}
-                              <span className="font-mono">{order.trackingNumber}</span>
-                            </p>
-                          </div>
                         </div>
                       )}
 
