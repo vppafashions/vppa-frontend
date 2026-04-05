@@ -3,13 +3,18 @@ import { useParams, Link } from 'react-router-dom';
 import { HeartIcon, ChevronDownIcon } from 'lucide-react';
 import { products } from '../data/products';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { useWishlist } from '../context/WishlistContext';
 import { Button } from '../components/ui/Button';
 export function ProductPage() {
   const { id } = useParams<{
     id: string;
   }>();
   const { addToCart } = useCart();
+  const { user } = useAuth();
+  const { isInWishlist, toggleWishlist } = useWishlist();
   const product = products.find((p) => p.id === id);
+  const wishlisted = product ? isInWishlist(product.id) : false;
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
@@ -160,9 +165,24 @@ export function ProductPage() {
               <Button
                 variant="outline"
                 size="icon"
-                className="h-14 w-14 flex-shrink-0">
+                className={`h-14 w-14 flex-shrink-0 ${wishlisted ? 'bg-red-50 border-red-300 text-red-500' : ''}`}
+                onClick={() => {
+                  if (!user) {
+                    window.location.href = '/login';
+                    return;
+                  }
+                  if (product) {
+                    toggleWishlist({
+                      productId: product.id,
+                      name: product.name,
+                      price: product.price,
+                      image: product.images[0],
+                      collectionSlug: product.collectionSlug,
+                    });
+                  }
+                }}>
                 
-                <HeartIcon className="w-5 h-5" />
+                <HeartIcon className={`w-5 h-5 ${wishlisted ? 'fill-current' : ''}`} />
               </Button>
             </div>
 
