@@ -1,16 +1,72 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+type AuthTab = 'login' | 'register' | 'magic-link';
+
 export function LoginPage() {
-  const { user, loading, loginWithGoogle } = useAuth();
+  const { user, loading, loginWithGoogle, loginWithEmail, registerWithEmail, sendMagicLink } = useAuth();
   const navigate = useNavigate();
+  const [tab, setTab] = useState<AuthTab>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
 
   useEffect(() => {
     if (!loading && user) {
       navigate('/');
     }
   }, [user, loading, navigate]);
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSubmitting(true);
+    try {
+      await loginWithEmail(email, password);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Login failed. Please check your credentials.';
+      setError(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await registerWithEmail(email, password, name);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Registration failed. Please try again.';
+      setError(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleMagicLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSubmitting(true);
+    try {
+      await sendMagicLink(email);
+      setMagicLinkSent(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to send magic link. Please try again.';
+      setError(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -32,10 +88,11 @@ export function LoginPage() {
 
         <div className="border border-border/30 rounded-2xl p-8 bg-card/50 backdrop-blur-sm">
           <h2 className="text-xl font-light text-center mb-2">Welcome</h2>
-          <p className="text-muted-foreground text-sm text-center mb-8">
+          <p className="text-muted-foreground text-sm text-center mb-6">
             Sign in to access your account, wishlist, and orders
           </p>
 
+          {/* Google Login */}
           <button
             onClick={loginWithGoogle}
             className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 border border-gray-200 rounded-full py-3.5 px-6 font-medium hover:bg-gray-50 hover:shadow-md transition-all duration-300"
@@ -60,6 +117,184 @@ export function LoginPage() {
             </svg>
             Continue with Google
           </button>
+
+          {/* Divider */}
+          <div className="flex items-center gap-4 my-6">
+            <div className="flex-1 h-px bg-border/30" />
+            <span className="text-xs text-muted-foreground uppercase tracking-widest">or</span>
+            <div className="flex-1 h-px bg-border/30" />
+          </div>
+
+          {/* Tabs */}
+          <div className="flex border border-border/30 rounded-full p-1 mb-6">
+            {([
+              { key: 'login' as AuthTab, label: 'Sign In' },
+              { key: 'register' as AuthTab, label: 'Register' },
+              { key: 'magic-link' as AuthTab, label: 'Magic Link' },
+            ]).map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => { setTab(key); setError(''); setMagicLinkSent(false); }}
+                className={`flex-1 text-xs py-2 rounded-full transition-all duration-200 ${
+                  tab === key
+                    ? 'bg-foreground text-background font-medium'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div className="bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-sm p-3 rounded-lg mb-4">
+              {error}
+            </div>
+          )}
+
+          {/* Email/Password Login */}
+          {tab === 'login' && (
+            <form onSubmit={handleEmailLogin} className="space-y-4">
+              <div>
+                <label className="block text-xs uppercase tracking-widest text-muted-foreground mb-1.5">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 bg-background border border-border/30 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-foreground/20"
+                  placeholder="your@email.com"
+                />
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-widest text-muted-foreground mb-1.5">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 bg-background border border-border/30 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-foreground/20"
+                  placeholder="Enter your password"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full bg-foreground text-background py-3.5 rounded-full text-sm font-medium hover:opacity-90 transition-all duration-300 disabled:opacity-50"
+              >
+                {submitting ? 'Signing in...' : 'Sign In'}
+              </button>
+            </form>
+          )}
+
+          {/* Register */}
+          {tab === 'register' && (
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div>
+                <label className="block text-xs uppercase tracking-widest text-muted-foreground mb-1.5">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 bg-background border border-border/30 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-foreground/20"
+                  placeholder="Your full name"
+                />
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-widest text-muted-foreground mb-1.5">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 bg-background border border-border/30 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-foreground/20"
+                  placeholder="your@email.com"
+                />
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-widest text-muted-foreground mb-1.5">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  className="w-full px-4 py-3 bg-background border border-border/30 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-foreground/20"
+                  placeholder="Min 8 characters"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full bg-foreground text-background py-3.5 rounded-full text-sm font-medium hover:opacity-90 transition-all duration-300 disabled:opacity-50"
+              >
+                {submitting ? 'Creating account...' : 'Create Account'}
+              </button>
+            </form>
+          )}
+
+          {/* Magic Link */}
+          {tab === 'magic-link' && (
+            <>
+              {magicLinkSent ? (
+                <div className="text-center py-4">
+                  <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-foreground/10 flex items-center justify-center">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium mb-2">Check your email</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    We sent a magic link to <strong>{email}</strong>. Click the link in the email to sign in.
+                  </p>
+                  <button
+                    onClick={() => setMagicLinkSent(false)}
+                    className="text-sm text-muted-foreground underline hover:text-foreground"
+                  >
+                    Send again
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleMagicLink} className="space-y-4">
+                  <p className="text-sm text-muted-foreground text-center mb-2">
+                    Enter your email and we'll send you a magic link to sign in — no password needed.
+                  </p>
+                  <div>
+                    <label className="block text-xs uppercase tracking-widest text-muted-foreground mb-1.5">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="w-full px-4 py-3 bg-background border border-border/30 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-foreground/20"
+                      placeholder="your@email.com"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full bg-foreground text-background py-3.5 rounded-full text-sm font-medium hover:opacity-90 transition-all duration-300 disabled:opacity-50"
+                  >
+                    {submitting ? 'Sending...' : 'Send Magic Link'}
+                  </button>
+                </form>
+              )}
+            </>
+          )}
 
           <p className="text-muted-foreground text-xs text-center mt-6">
             By continuing, you agree to our Terms of Service and Privacy Policy
