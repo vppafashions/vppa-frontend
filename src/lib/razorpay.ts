@@ -45,6 +45,11 @@ function loadRazorpayScript(): Promise<boolean> {
   });
 }
 
+// Pre-load script so it's ready when user clicks pay (avoids Safari popup blocker)
+if (typeof window !== 'undefined') {
+  loadRazorpayScript();
+}
+
 // Step 1: Create order on server (server calls Razorpay Orders API with key_secret)
 async function createRazorpayOrder(amountInPaise: number, receipt?: string, notes?: Record<string, string>) {
   const response = await fetch('/api/create-order', {
@@ -114,6 +119,8 @@ export async function initiateRazorpayPayment(
   );
 
   // Step 2: Open Razorpay Checkout with order_id (mandatory per docs)
+  // Create the Razorpay instance immediately after getting the order
+  // This minimizes async hops before rzp.open() which helps Safari
   return new Promise((resolve, reject) => {
     const rzpOptions = {
       key: order.key_id, // Public key returned from server
@@ -156,14 +163,23 @@ export async function initiateRazorpayPayment(
         ondismiss: () => {
           reject(new Error('Payment cancelled by user'));
         },
+        // Ensure modal works on mobile Safari
+        confirm_close: true,
+        animation: true,
       },
     };
 
-    const rzp = new window.Razorpay(rzpOptions as unknown as Record<string, unknown>);
-    rzp.on('payment.failed', (response: Record<string, unknown>) => {
-      const error = response.error as Record<string, unknown> | undefined;
-      reject(new Error((error?.description as string) || 'Payment failed'));
-    });
-    rzp.open();
+    try {
+      const rzp = new window.Razorpay(rzpOptions as unknown as Record<string, unknown>);
+      rzp.on('payment.failed', (response: Record<string, unknown>) => {
+        const error = response.error as Record<string, unknown> | undefined;
+        reject(new Error((error?.description as string) || 'Payment failed'));
+      });
+      // Use setTimeout(0) to ensure the modal opens in a new microtask
+      // This helps Safari handle the popup correctly
+      setTimeout(() => rzp.open(), 0);
+    } catch (error) {
+      reject(new Error('Failed to initialize payment gateway'));
+    }
   });
 }
