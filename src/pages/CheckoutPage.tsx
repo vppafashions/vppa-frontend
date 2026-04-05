@@ -141,10 +141,10 @@ export function CheckoutPage() {
     }
 
     try {
-      // Initiate Razorpay payment
+      // Step 1-3: Server creates Razorpay order, opens checkout, verifies signature
       const response = await initiateRazorpayPayment({
-        amount: total * 100, // Convert to paise
-        description: `Order - ${items.length} item(s)`,
+        amount: total, // in rupees — razorpay.ts converts to paise
+        receipt: `order_${Date.now()}`,
         prefill: {
           name: `${form.firstName} ${form.lastName}`,
           email: form.email,
