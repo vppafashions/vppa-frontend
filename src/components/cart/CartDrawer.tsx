@@ -25,7 +25,7 @@ export function CartDrawer() {
         onClick={() => setIsCartOpen(false)}
         aria-hidden="true" />
       
-      <div className="fixed inset-y-0 right-0 w-full max-w-md bg-background shadow-2xl z-50 flex flex-col transform transition-transform duration-500 ease-in-out border-l border-border/20">
+      <div className="fixed inset-y-0 right-0 w-full max-w-md bg-background shadow-2xl z-50 flex flex-col transform transition-transform duration-500 ease-in-out border-l border-border/20" style={{ backgroundColor: '#faf9f6' }}>
         <div className="flex items-center justify-between p-6 border-b border-border/50">
           <h2 className="font-serif text-2xl">Shopping Bag</h2>
           <button
@@ -118,7 +118,7 @@ export function CartDrawer() {
         </div>
 
         {items.length > 0 &&
-        <div className="p-6 border-t border-border/50 bg-background/95 backdrop-blur-sm">
+        <div className="p-6 border-t border-border/50 bg-background">
             <div className="flex justify-between items-center mb-6">
               <span className="text-lg">Subtotal</span>
               <span className="font-serif text-2xl">
