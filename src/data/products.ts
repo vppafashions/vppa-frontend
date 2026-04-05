@@ -15,7 +15,7 @@ export const products: Product[] = [
 {
   id: 'p1',
   name: 'Midnight Velocity Sweatshirt',
-  price: 7999,
+  price: 1,
   description:
   'Crafted from heavyweight French terry, this sweatshirt offers a structured yet relaxed silhouette. Features subtle tonal embroidery and ribbed trims.',
   images: [
