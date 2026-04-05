@@ -1,8 +1,3 @@
-import { ID, Query, Permission, Role } from 'appwrite';
-import { databases, DATABASE_ID } from './appwrite';
-
-const ORDERS_COLLECTION_ID = 'orders';
-
 export interface OrderData {
   customerName: string;
   email: string;
@@ -25,31 +20,17 @@ export interface OrderDocument extends OrderData {
   $updatedAt: string;
 }
 
+const API_BASE = import.meta.env.VITE_API_BASE || '';
+
 export async function createOrder(data: OrderData): Promise<OrderDocument | null> {
   try {
-    const payload: Record<string, unknown> = { ...data };
-    // Remove empty optional fields
-    if (!payload.razorpayPaymentId) delete payload.razorpayPaymentId;
-    if (!payload.razorpayOrderId) delete payload.razorpayOrderId;
-    if (!payload.trackingNumber) delete payload.trackingNumber;
-    if (!payload.courier) delete payload.courier;
-    if (!payload.userId) delete payload.userId;
-
-    const permissions = data.userId
-      ? [
-          Permission.read(Role.user(data.userId)),
-          Permission.update(Role.user(data.userId)),
-        ]
-      : [];
-
-    const doc = await databases.createDocument(
-      DATABASE_ID,
-      ORDERS_COLLECTION_ID,
-      ID.unique(),
-      payload,
-      permissions
-    );
-    return doc as unknown as OrderDocument;
+    const response = await fetch(`${API_BASE}/api/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) return null;
+    return await response.json();
   } catch (error) {
     console.error('Failed to create order:', error);
     return null;
@@ -58,16 +39,10 @@ export async function createOrder(data: OrderData): Promise<OrderDocument | null
 
 export async function getUserOrders(userId: string): Promise<OrderDocument[]> {
   try {
-    const response = await databases.listDocuments(
-      DATABASE_ID,
-      ORDERS_COLLECTION_ID,
-      [
-        Query.equal('userId', userId),
-        Query.orderDesc('$createdAt'),
-        Query.limit(50),
-      ]
-    );
-    return response.documents as unknown as OrderDocument[];
+    const response = await fetch(`${API_BASE}/api/orders?userId=${encodeURIComponent(userId)}`);
+    if (!response.ok) return [];
+    const data = await response.json();
+    return data.documents || [];
   } catch {
     return [];
   }
@@ -75,12 +50,9 @@ export async function getUserOrders(userId: string): Promise<OrderDocument[]> {
 
 export async function getOrderById(orderId: string): Promise<OrderDocument | null> {
   try {
-    const doc = await databases.getDocument(
-      DATABASE_ID,
-      ORDERS_COLLECTION_ID,
-      orderId
-    );
-    return doc as unknown as OrderDocument;
+    const response = await fetch(`${API_BASE}/api/orders?orderId=${encodeURIComponent(orderId)}`);
+    if (!response.ok) return null;
+    return await response.json();
   } catch {
     return null;
   }
