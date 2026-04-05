@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { getCustomerByUserId, saveCustomer, INDIAN_STATES } from '../lib/customers';
+import { createOrder } from '../lib/orders';
+import { initiateRazorpayPayment } from '../lib/razorpay';
 
 interface CheckoutForm {
   email: string;
@@ -105,9 +107,12 @@ export function CheckoutPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const [paymentError, setPaymentError] = useState('');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setPaymentError('');
 
     // Save customer details to Appwrite if logged in
     if (user && saveAddress) {
@@ -135,11 +140,69 @@ export function CheckoutPage() {
       });
     }
 
-    // Simulate payment processing
-    setTimeout(() => {
+    try {
+      // Initiate Razorpay payment
+      const response = await initiateRazorpayPayment({
+        amount: total * 100, // Convert to paise
+        description: `Order - ${items.length} item(s)`,
+        prefill: {
+          name: `${form.firstName} ${form.lastName}`,
+          email: form.email,
+          contact: form.phone,
+        },
+        notes: {
+          shippingAddress: `${form.shippingAddress}, ${form.shippingCity}, ${form.shippingState} ${form.shippingPincode}`,
+        },
+      });
+
+      // Build full address string
+      const fullAddress = [
+        form.shippingAddress,
+        form.shippingLandmark,
+        form.shippingCity,
+        form.shippingState,
+        form.shippingPincode,
+        form.shippingCountry,
+      ].filter(Boolean).join(', ');
+
+      // Build billing info for notes
+      const billingInfo = form.sameAsShipping
+        ? 'Same as shipping'
+        : [form.billingAddress, form.billingCity, form.billingState, form.billingPincode, form.billingCountry].filter(Boolean).join(', ');
+
+      const orderItems = items.map((item) => ({
+        productId: item.productId,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        size: item.size,
+        color: item.color,
+      }));
+
+      // Create order in Appwrite
+      await createOrder({
+        customerName: `${form.firstName} ${form.lastName}`,
+        email: form.email,
+        phone: form.phone,
+        address: fullAddress,
+        items: JSON.stringify(orderItems),
+        total,
+        status: 'confirmed',
+        notes: billingInfo + (form.gstin ? ` | GSTIN: ${form.gstin}` : '') + (form.companyName ? ` | Company: ${form.companyName}` : ''),
+        userId: user?.$id,
+        razorpayPaymentId: response.razorpay_payment_id,
+        razorpayOrderId: response.razorpay_order_id,
+      });
+
       clearCart();
       navigate('/thank-you');
-    }, 1500);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Payment failed';
+      if (message !== 'Payment cancelled by user') {
+        setPaymentError(message);
+      }
+      setIsSubmitting(false);
+    }
   };
 
   if (items.length === 0) {
@@ -367,26 +430,19 @@ export function CheckoutPage() {
               {/* Payment Info */}
               <section>
                 <h2 className="text-sm uppercase tracking-widest font-semibold mb-6 pb-2 border-b border-border/50">
-                  Payment Details
+                  Payment
                 </h2>
-                <div className="bg-accent/10 p-6 border border-border/50">
-                  <div className="space-y-4">
-                    <Input type="text" placeholder="Card Number" required />
-                    <Input type="text" placeholder="Name on Card" required />
-                    <div className="grid grid-cols-2 gap-4">
-                      <Input
-                        type="text"
-                        placeholder="Expiration Date (MM/YY)"
-                        required
-                      />
-                      <Input
-                        type="text"
-                        placeholder="Security Code (CVV)"
-                        required
-                      />
-                    </div>
-                  </div>
+                <div className="bg-accent/10 p-6 border border-border/50 text-center">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Secure payment powered by Razorpay
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    UPI, Cards, Net Banking, Wallets accepted
+                  </p>
                 </div>
+                {paymentError && (
+                  <p className="text-red-500 text-sm mt-3">{paymentError}</p>
+                )}
               </section>
 
               {/* Save address checkbox for logged-in users */}
