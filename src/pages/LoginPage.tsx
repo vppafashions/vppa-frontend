@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 type AuthTab = 'login' | 'register' | 'magic-link';
 
 export function LoginPage() {
-  const { user, loading, loginWithGoogle, loginWithEmail, registerWithEmail, sendMagicLink } = useAuth();
+  const { user, loading, loginWithGoogle, loginWithEmail, registerWithEmail, sendMagicLink, sendPasswordReset } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState<AuthTab>('login');
   const [email, setEmail] = useState('');
@@ -14,6 +14,8 @@ export function LoginPage() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   useEffect(() => {
     if (!loading && user) {
@@ -62,6 +64,21 @@ export function LoginPage() {
       setMagicLinkSent(true);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to send magic link. Please try again.';
+      setError(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSubmitting(true);
+    try {
+      await sendPasswordReset(email);
+      setResetSent(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to send reset email. Please try again.';
       setError(msg);
     } finally {
       setSubmitting(false);
@@ -189,6 +206,13 @@ export function LoginPage() {
               >
                 {submitting ? 'Signing in...' : 'Sign In'}
               </button>
+              <button
+                type="button"
+                onClick={() => { setShowForgotPassword(true); setError(''); }}
+                className="w-full text-sm text-muted-foreground hover:text-foreground mt-2 transition-colors"
+              >
+                Forgot Password?
+              </button>
             </form>
           )}
 
@@ -294,6 +318,74 @@ export function LoginPage() {
                 </form>
               )}
             </>
+          )}
+
+          {/* Forgot Password Modal */}
+          {showForgotPassword && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+              <div className="w-full max-w-md mx-4 border border-border/30 rounded-2xl p-8 bg-card">
+                {resetSent ? (
+                  <div className="text-center">
+                    <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-foreground/10 flex items-center justify-center">
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium mb-2">Check your email</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      We sent a password reset link to <strong>{email}</strong>. Click the link in the email to set a new password.
+                    </p>
+                    <button
+                      onClick={() => { setShowForgotPassword(false); setResetSent(false); }}
+                      className="bg-foreground text-background py-3 px-8 rounded-full text-sm font-medium hover:opacity-90 transition-all duration-300"
+                    >
+                      Back to Login
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <h3 className="text-lg font-medium text-center mb-2">Reset Password</h3>
+                    <p className="text-sm text-muted-foreground text-center mb-6">
+                      Enter your email and we'll send you a link to reset your password.
+                    </p>
+                    {error && (
+                      <div className="bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-sm p-3 rounded-lg mb-4">
+                        {error}
+                      </div>
+                    )}
+                    <form onSubmit={handleForgotPassword} className="space-y-4">
+                      <div>
+                        <label className="block text-xs uppercase tracking-widest text-muted-foreground mb-1.5">
+                          Email
+                        </label>
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                          className="w-full px-4 py-3 bg-background border border-border/30 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-foreground/20"
+                          placeholder="your@email.com"
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={submitting}
+                        className="w-full bg-foreground text-background py-3.5 rounded-full text-sm font-medium hover:opacity-90 transition-all duration-300 disabled:opacity-50"
+                      >
+                        {submitting ? 'Sending...' : 'Send Reset Link'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setShowForgotPassword(false); setError(''); }}
+                        className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        Back to Login
+                      </button>
+                    </form>
+                  </>
+                )}
+              </div>
+            </div>
           )}
 
           <p className="text-muted-foreground text-xs text-center mt-6">

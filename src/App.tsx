@@ -16,6 +16,7 @@ import { AccountPage } from './pages/AccountPage';
 import { MyOrdersPage } from './pages/MyOrdersPage';
 import { WishlistPage } from './pages/WishlistPage';
 import { MagicLinkCallbackPage } from './pages/MagicLinkCallbackPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 export function App() {
   return <AuthProvider>
       <WishlistProvider>
@@ -36,6 +37,7 @@ export function App() {
                 <Route path="/orders" element={<MyOrdersPage />} />
                 <Route path="/wishlist" element={<WishlistPage />} />
                 <Route path="/magic-link-callback" element={<MagicLinkCallbackPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
               </Routes>
             </div>
             <Footer />
