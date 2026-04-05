@@ -8,6 +8,7 @@ import { getCustomerByUserId, saveCustomer, INDIAN_STATES } from '../lib/custome
 import { createOrder } from '../lib/orders';
 import { initiateRazorpayPayment } from '../lib/razorpay';
 import { checkCartStock } from '../lib/stock';
+import { getAddresses, createAddress, type Address } from '../lib/addresses';
 
 interface CheckoutForm {
   email: string;
@@ -63,13 +64,28 @@ export function CheckoutPage() {
   const [form, setForm] = useState<CheckoutForm>(initialForm);
   const [saveAddress, setSaveAddress] = useState(true);
   const [stockErrors, setStockErrors] = useState<Array<{ name: string; requested: number; available: number }>>([]);
+  const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [useNewAddress, setUseNewAddress] = useState(false);
   const subtotal = getCartTotal();
   const shipping = 0;
   const total = subtotal + shipping;
 
-  // Auto-fill from saved customer data
+  // Load saved addresses and customer data
   useEffect(() => {
     if (!user) return;
+    // Load addresses
+    getAddresses(user.$id).then((addrs) => {
+      setSavedAddresses(addrs);
+      if (addrs.length > 0) {
+        const defaultAddr = addrs.find((a) => a.isDefault) || addrs[0];
+        setSelectedAddressId(defaultAddr.$id);
+        fillFormFromAddress(defaultAddr);
+      } else {
+        setUseNewAddress(true);
+      }
+    });
+    // Load customer profile for contact details
     getCustomerByUserId(user.$id).then((customer) => {
       if (!customer) {
         setForm((prev) => ({
@@ -80,30 +96,54 @@ export function CheckoutPage() {
         }));
         return;
       }
-      setForm({
+      setForm((prev) => ({
+        ...prev,
         email: customer.email || user.email || '',
-        phone: customer.phone || '',
+        phone: customer.phone || prev.phone || '',
         alternatePhone: customer.alternatePhone || '',
-        firstName: customer.firstName || '',
-        lastName: customer.lastName || '',
+        firstName: prev.firstName || customer.firstName || '',
+        lastName: prev.lastName || customer.lastName || '',
         companyName: customer.companyName || '',
         gstin: customer.gstin || '',
-        shippingAddress: customer.shippingAddress || '',
-        shippingLandmark: customer.landmark || '',
-        shippingCity: customer.shippingCity || '',
-        shippingState: customer.shippingState || '',
-        shippingPincode: customer.shippingPincode || '',
-        shippingCountry: customer.shippingCountry || 'India',
-        sameAsShipping: customer.sameAsShipping ?? true,
-        billingAddress: customer.billingAddress || '',
-        billingLandmark: '',
-        billingCity: customer.billingCity || '',
-        billingState: customer.billingState || '',
-        billingPincode: customer.billingPincode || '',
-        billingCountry: customer.billingCountry || 'India',
-      });
+      }));
     });
   }, [user]);
+
+  const fillFormFromAddress = (addr: Address) => {
+    setForm((prev) => ({
+      ...prev,
+      firstName: addr.firstName || prev.firstName,
+      lastName: addr.lastName || prev.lastName,
+      phone: addr.phone || prev.phone,
+      shippingAddress: addr.address,
+      shippingLandmark: addr.landmark || '',
+      shippingCity: addr.city,
+      shippingState: addr.state,
+      shippingPincode: addr.pincode,
+      shippingCountry: addr.country || 'India',
+    }));
+  };
+
+  const handleSelectAddress = (addrId: string) => {
+    setSelectedAddressId(addrId);
+    setUseNewAddress(false);
+    const addr = savedAddresses.find((a) => a.$id === addrId);
+    if (addr) fillFormFromAddress(addr);
+  };
+
+  const handleUseNewAddress = () => {
+    setSelectedAddressId(null);
+    setUseNewAddress(true);
+    setForm((prev) => ({
+      ...prev,
+      shippingAddress: '',
+      shippingLandmark: '',
+      shippingCity: '',
+      shippingState: '',
+      shippingPincode: '',
+      shippingCountry: 'India',
+    }));
+  };
 
   const updateField = (field: keyof CheckoutForm, value: string | boolean) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -131,7 +171,7 @@ export function CheckoutPage() {
       // If stock check fails, don't block checkout
     }
 
-    // Save customer details to Appwrite if logged in
+    // Save customer details and new address to Appwrite if logged in
     if (user && saveAddress) {
       await saveCustomer({
         userId: user.$id,
@@ -155,6 +195,22 @@ export function CheckoutPage() {
         alternatePhone: form.alternatePhone,
         sameAsShipping: form.sameAsShipping,
       });
+      // Save new address to addresses collection
+      if (useNewAddress && form.shippingAddress) {
+        await createAddress({
+          userId: user.$id,
+          label: 'Home',
+          firstName: form.firstName,
+          lastName: form.lastName,
+          phone: form.phone,
+          address: form.shippingAddress,
+          landmark: form.shippingLandmark,
+          city: form.shippingCity,
+          state: form.shippingState,
+          pincode: form.shippingPincode,
+          country: form.shippingCountry,
+        });
+      }
     }
 
     try {
@@ -320,6 +376,72 @@ export function CheckoutPage() {
                 <h2 className="text-sm uppercase tracking-widest font-semibold mb-6 pb-2 border-b border-border/50">
                   Shipping Address
                 </h2>
+
+                {/* Saved Address Cards */}
+                {user && savedAddresses.length > 0 && (
+                  <div className="space-y-3 mb-6">
+                    {savedAddresses.map((addr) => (
+                      <button
+                        key={addr.$id}
+                        type="button"
+                        onClick={() => handleSelectAddress(addr.$id)}
+                        className={`w-full text-left p-4 border rounded-lg transition-all ${
+                          selectedAddressId === addr.$id && !useNewAddress
+                            ? 'border-foreground bg-foreground/5'
+                            : 'border-border/30 hover:border-foreground/50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                              selectedAddressId === addr.$id && !useNewAddress ? 'border-foreground' : 'border-border/50'
+                            }`}>
+                              {selectedAddressId === addr.$id && !useNewAddress && (
+                                <div className="w-2 h-2 rounded-full bg-foreground" />
+                              )}
+                            </div>
+                            <span className="text-xs uppercase tracking-widest font-semibold">{addr.label || 'Home'}</span>
+                            {addr.isDefault && (
+                              <span className="text-xs text-muted-foreground">(Default)</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-sm pl-6 space-y-0.5">
+                          <p className="font-medium">{addr.firstName} {addr.lastName}</p>
+                          <p className="text-muted-foreground">
+                            {addr.address}{addr.landmark ? `, ${addr.landmark}` : ''}, {addr.city}, {addr.state} {addr.pincode}
+                          </p>
+                          <p className="text-muted-foreground">{addr.phone}</p>
+                        </div>
+                      </button>
+                    ))}
+
+                    {/* Add New Address option */}
+                    <button
+                      type="button"
+                      onClick={handleUseNewAddress}
+                      className={`w-full text-left p-4 border rounded-lg transition-all ${
+                        useNewAddress
+                          ? 'border-foreground bg-foreground/5'
+                          : 'border-border/30 hover:border-foreground/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                          useNewAddress ? 'border-foreground' : 'border-border/50'
+                        }`}>
+                          {useNewAddress && (
+                            <div className="w-2 h-2 rounded-full bg-foreground" />
+                          )}
+                        </div>
+                        <span className="text-sm font-medium">+ Add a new address</span>
+                      </div>
+                    </button>
+                  </div>
+                )}
+
+                {/* New Address Form - shown when no saved addresses or user chose new */}
+                {(useNewAddress || savedAddresses.length === 0) && (
                 <div className="space-y-4">
                   <Input
                     type="text"
@@ -372,6 +494,7 @@ export function CheckoutPage() {
                     />
                   </div>
                 </div>
+                )}
               </section>
 
               {/* Billing Address */}
