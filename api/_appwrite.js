@@ -22,6 +22,15 @@ function headers() {
   };
 }
 
+// Query builder for Appwrite REST API (JSON format)
+const Query = {
+  equal: (attribute, values) => JSON.stringify({ method: 'equal', attribute, values: Array.isArray(values) ? values : [values] }),
+  notEqual: (attribute, values) => JSON.stringify({ method: 'notEqual', attribute, values: Array.isArray(values) ? values : [values] }),
+  limit: (value) => JSON.stringify({ method: 'limit', values: [value] }),
+  orderDesc: (attribute) => JSON.stringify({ method: 'orderDesc', attribute, values: [] }),
+  orderAsc: (attribute) => JSON.stringify({ method: 'orderAsc', attribute, values: [] }),
+};
+
 function corsHeaders(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -102,6 +111,7 @@ export {
   APPWRITE_API_KEY,
   DATABASE_ID,
   COLLECTION_IDS,
+  Query,
   corsHeaders,
   listDocuments,
   getDocument,
