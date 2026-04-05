@@ -1,5 +1,5 @@
 // Vercel Serverless Function: Customer operations via Appwrite API key
-import { corsHeaders, listDocuments, createDocument, updateDocument, COLLECTION_IDS } from './_appwrite.js';
+import { corsHeaders, listDocuments, createDocument, updateDocument, COLLECTION_IDS, Query } from './_appwrite.js';
 
 export default async function handler(req, res) {
   corsHeaders(res);
@@ -14,8 +14,8 @@ export default async function handler(req, res) {
       if (!userId) return res.status(400).json({ error: 'userId required' });
 
       const data = await listDocuments(collectionId, [
-        `equal("userId", ["${userId}"])`,
-        'limit(1)',
+        Query.equal('userId', userId),
+        Query.limit(1),
       ]);
       if (data.documents.length > 0) {
         return res.status(200).json(data.documents[0]);
@@ -50,8 +50,8 @@ export default async function handler(req, res) {
 
       // Check if customer exists
       const existing = await listDocuments(collectionId, [
-        `equal("userId", ["${userId}"])`,
-        'limit(1)',
+        Query.equal('userId', userId),
+        Query.limit(1),
       ]);
 
       if (existing.documents.length > 0) {
