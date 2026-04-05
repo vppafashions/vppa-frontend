@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { FileTextIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getUserOrders, type OrderDocument } from '../lib/orders';
+import { openInvoicePrint } from '../lib/invoice';
 
 interface OrderItem {
   productId: string;
@@ -185,6 +187,17 @@ export function MyOrdersPage() {
                             {order.razorpayPaymentId}
                           </p>
                         </div>
+                      )}
+
+                      {/* Download Invoice */}
+                      {(order.status === 'confirmed' || order.status === 'shipped' || order.status === 'delivered') && (
+                        <button
+                          onClick={() => openInvoicePrint(order)}
+                          className="flex items-center gap-2 px-4 py-2.5 border border-border/30 rounded-lg text-sm hover:bg-foreground hover:text-background transition-all duration-300 w-full justify-center"
+                        >
+                          <FileTextIcon className="w-4 h-4" />
+                          Download Invoice
+                        </button>
                       )}
                     </div>
                   )}

@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { SearchIcon, ShoppingBagIcon, MenuIcon, XIcon, UserIcon } from 'lucide-react';
+import { SearchIcon, ShoppingBagIcon, MenuIcon, XIcon, UserIcon, HeartIcon } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import { useWishlist } from '../../context/WishlistContext';
 import { collections } from '../../data/collections';
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { getCartCount, setIsCartOpen } = useCart();
   const { user, loading: authLoading } = useAuth();
+  const { wishlistCount } = useWishlist();
   const location = useLocation();
   const isHomePage = location.pathname === '/';
   useEffect(() => {
@@ -78,6 +80,21 @@ export function Header() {
                     className={`transition-all duration-500 ${isScrolled ? 'w-4 h-4' : 'w-5 h-5'}`} />
                   
                 </button>
+                {!authLoading && user && (
+                  <Link
+                    to="/wishlist"
+                    className="p-2 hover:text-primary transition-colors relative"
+                    aria-label="Wishlist">
+                    <HeartIcon
+                      className={`transition-all duration-500 ${isScrolled ? 'w-4 h-4' : 'w-5 h-5'}`} />
+                    {wishlistCount > 0 && (
+                      <span
+                        className={`absolute bg-red-500 text-white font-bold rounded-full flex items-center justify-center transition-all duration-500 ${isScrolled ? 'top-0 right-0 text-[8px] w-3.5 h-3.5' : 'top-0 right-0 text-[10px] w-4 h-4'}`}>
+                        {wishlistCount}
+                      </span>
+                    )}
+                  </Link>
+                )}
                 {!authLoading && (
                   <Link
                     to={user ? '/account' : '/login'}
@@ -134,7 +151,20 @@ export function Header() {
                 {collection.name}
               </Link>
           )}
-            <div className="border-t border-border/20 pt-8">
+            <div className="border-t border-border/20 pt-8 space-y-6">
+              {user && (
+                <Link
+                  to="/wishlist"
+                  className="flex items-center gap-3 hover:text-primary transition-colors">
+                  <HeartIcon className="w-5 h-5" />
+                  My Wishlist
+                  {wishlistCount > 0 && (
+                    <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">
+                      {wishlistCount}
+                    </span>
+                  )}
+                </Link>
+              )}
               <Link
                 to={user ? '/account' : '/login'}
                 className="flex items-center gap-3 hover:text-primary transition-colors">

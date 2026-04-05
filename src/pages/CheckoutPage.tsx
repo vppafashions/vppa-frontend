@@ -7,6 +7,7 @@ import { Input } from '../components/ui/Input';
 import { getCustomerByUserId, saveCustomer, INDIAN_STATES } from '../lib/customers';
 import { createOrder } from '../lib/orders';
 import { initiateRazorpayPayment } from '../lib/razorpay';
+import { checkCartStock } from '../lib/stock';
 
 interface CheckoutForm {
   email: string;
@@ -61,6 +62,7 @@ export function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState<CheckoutForm>(initialForm);
   const [saveAddress, setSaveAddress] = useState(true);
+  const [stockErrors, setStockErrors] = useState<Array<{ name: string; requested: number; available: number }>>([]);
   const subtotal = getCartTotal();
   const shipping = 0;
   const total = subtotal + shipping;
@@ -113,6 +115,21 @@ export function CheckoutPage() {
     e.preventDefault();
     setIsSubmitting(true);
     setPaymentError('');
+    setStockErrors([]);
+
+    // Check stock availability before proceeding
+    try {
+      const outOfStock = await checkCartStock(
+        items.map((item) => ({ productId: item.productId, name: item.name, quantity: item.quantity }))
+      );
+      if (outOfStock.length > 0) {
+        setStockErrors(outOfStock);
+        setIsSubmitting(false);
+        return;
+      }
+    } catch {
+      // If stock check fails, don't block checkout
+    }
 
     // Save customer details to Appwrite if logged in
     if (user && saveAddress) {
@@ -426,6 +443,24 @@ export function CheckoutPage() {
                   </div>
                 )}
               </section>
+
+              {/* Stock Errors */}
+              {stockErrors.length > 0 && (
+                <div className="bg-red-50 border border-red-200 p-6 rounded-lg">
+                  <h3 className="text-red-800 font-semibold text-sm mb-3">Some items are out of stock</h3>
+                  <ul className="space-y-2">
+                    {stockErrors.map((err) => (
+                      <li key={err.name} className="text-red-700 text-sm">
+                        <strong>{err.name}</strong>
+                        {err.available === 0
+                          ? ' is currently out of stock.'
+                          : ` — only ${err.available} available (you requested ${err.requested}).`}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-red-600 text-xs mt-3">Please update your cart before proceeding.</p>
+                </div>
+              )}
 
               {/* Payment Info */}
               <section>

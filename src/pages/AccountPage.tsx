@@ -163,6 +163,13 @@ export function AccountPage() {
           </button>
 
           <button
+            onClick={() => navigate('/wishlist')}
+            className="w-full py-3 px-6 border border-border/30 rounded-full text-sm uppercase tracking-widest hover:bg-foreground hover:text-background transition-all duration-300 mb-3"
+          >
+            My Wishlist
+          </button>
+
+          <button
             onClick={async () => {
               await logout();
               navigate('/');
