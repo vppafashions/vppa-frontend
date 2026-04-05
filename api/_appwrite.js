@@ -12,6 +12,7 @@ const COLLECTION_IDS = {
   customers: 'customers',
   wishlists: 'wishlists',
   products: 'products',
+  addresses: 'addresses',
 };
 
 function headers() {
