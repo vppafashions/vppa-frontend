@@ -1,6 +1,3 @@
-import { ID, Query, Permission, Role } from 'appwrite';
-import { databases, DATABASE_ID, CARTS_COLLECTION_ID } from './appwrite';
-
 export interface CartItemData {
   productId: string;
   name: string;
@@ -16,23 +13,23 @@ interface CartDocument extends CartItemData {
   userId: string;
 }
 
+const API_BASE = import.meta.env.VITE_API_BASE || '';
+
 export async function getCartItems(userId: string): Promise<CartDocument[]> {
   try {
-    const response = await databases.listDocuments(
-      DATABASE_ID,
-      CARTS_COLLECTION_ID,
-      [Query.equal('userId', userId), Query.limit(100)]
-    );
-    return response.documents.map((doc) => ({
-      $id: doc.$id,
-      userId: doc.userId,
-      productId: doc.productId,
-      name: doc.name,
-      price: doc.price,
-      size: doc.size,
-      color: doc.color,
-      quantity: doc.quantity,
-      image: doc.image || '',
+    const response = await fetch(`${API_BASE}/api/cart?userId=${encodeURIComponent(userId)}`);
+    if (!response.ok) return [];
+    const data = await response.json();
+    return (data.documents || []).map((doc: Record<string, unknown>) => ({
+      $id: doc.$id as string,
+      userId: doc.userId as string,
+      productId: doc.productId as string,
+      name: doc.name as string,
+      price: doc.price as number,
+      size: doc.size as string,
+      color: doc.color as string,
+      quantity: doc.quantity as number,
+      image: (doc.image as string) || '',
     }));
   } catch {
     return [];
@@ -41,42 +38,13 @@ export async function getCartItems(userId: string): Promise<CartDocument[]> {
 
 export async function addCartItem(userId: string, item: CartItemData): Promise<string | null> {
   try {
-    // Check if same product/size/color exists
-    const existing = await databases.listDocuments(
-      DATABASE_ID,
-      CARTS_COLLECTION_ID,
-      [
-        Query.equal('userId', userId),
-        Query.equal('productId', item.productId),
-        Query.equal('size', item.size),
-        Query.equal('color', item.color),
-        Query.limit(1),
-      ]
-    );
-
-    if (existing.documents.length > 0) {
-      const doc = existing.documents[0];
-      const newQty = doc.quantity + item.quantity;
-      await databases.updateDocument(
-        DATABASE_ID,
-        CARTS_COLLECTION_ID,
-        doc.$id,
-        { quantity: newQty }
-      );
-      return doc.$id;
-    }
-
-    const doc = await databases.createDocument(
-      DATABASE_ID,
-      CARTS_COLLECTION_ID,
-      ID.unique(),
-      { userId, ...item },
-      [
-        Permission.read(Role.user(userId)),
-        Permission.update(Role.user(userId)),
-        Permission.delete(Role.user(userId)),
-      ]
-    );
+    const response = await fetch(`${API_BASE}/api/cart`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, ...item }),
+    });
+    if (!response.ok) return null;
+    const doc = await response.json();
     return doc.$id;
   } catch (error) {
     console.error('Failed to add cart item:', error);
@@ -86,13 +54,12 @@ export async function addCartItem(userId: string, item: CartItemData): Promise<s
 
 export async function updateCartItemQuantity(docId: string, quantity: number): Promise<boolean> {
   try {
-    await databases.updateDocument(
-      DATABASE_ID,
-      CARTS_COLLECTION_ID,
-      docId,
-      { quantity }
-    );
-    return true;
+    const response = await fetch(`${API_BASE}/api/cart`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ docId, quantity }),
+    });
+    return response.ok;
   } catch (error) {
     console.error('Failed to update cart item:', error);
     return false;
@@ -101,12 +68,12 @@ export async function updateCartItemQuantity(docId: string, quantity: number): P
 
 export async function removeCartItem(docId: string): Promise<boolean> {
   try {
-    await databases.deleteDocument(
-      DATABASE_ID,
-      CARTS_COLLECTION_ID,
-      docId
-    );
-    return true;
+    const response = await fetch(`${API_BASE}/api/cart`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ docId }),
+    });
+    return response.ok;
   } catch (error) {
     console.error('Failed to remove cart item:', error);
     return false;
@@ -115,17 +82,12 @@ export async function removeCartItem(docId: string): Promise<boolean> {
 
 export async function clearCartItems(userId: string): Promise<boolean> {
   try {
-    const items = await databases.listDocuments(
-      DATABASE_ID,
-      CARTS_COLLECTION_ID,
-      [Query.equal('userId', userId), Query.limit(100)]
-    );
-    await Promise.all(
-      items.documents.map((doc) =>
-        databases.deleteDocument(DATABASE_ID, CARTS_COLLECTION_ID, doc.$id)
-      )
-    );
-    return true;
+    const response = await fetch(`${API_BASE}/api/cart`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, clearAll: true }),
+    });
+    return response.ok;
   } catch (error) {
     console.error('Failed to clear cart:', error);
     return false;
