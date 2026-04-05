@@ -59,12 +59,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const loginWithEmail = async (email: string, password: string) => {
+    try {
+      await account.deleteSession('current');
+    } catch {
+      // No existing session to clear
+    }
     await account.createEmailPasswordSession(email, password);
     const currentUser = await account.get();
     setUser(currentUser);
   };
 
   const registerWithEmail = async (email: string, password: string, name: string) => {
+    try {
+      await account.deleteSession('current');
+    } catch {
+      // No existing session to clear
+    }
     await account.create('unique()', email, password, name);
     await account.createEmailPasswordSession(email, password);
     const currentUser = await account.get();
@@ -81,6 +91,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const confirmMagicLink = async (userId: string, secret: string) => {
+    try {
+      await account.deleteSession('current');
+    } catch {
+      // No existing session to clear — that's fine
+    }
     await account.createSession(userId, secret);
     const currentUser = await account.get();
     setUser(currentUser);
