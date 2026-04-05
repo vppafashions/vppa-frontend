@@ -15,6 +15,7 @@ import { LoginPage } from './pages/LoginPage';
 import { AccountPage } from './pages/AccountPage';
 import { MyOrdersPage } from './pages/MyOrdersPage';
 import { WishlistPage } from './pages/WishlistPage';
+import { MagicLinkCallbackPage } from './pages/MagicLinkCallbackPage';
 export function App() {
   return <AuthProvider>
       <WishlistProvider>
@@ -34,6 +35,7 @@ export function App() {
                 <Route path="/account" element={<AccountPage />} />
                 <Route path="/orders" element={<MyOrdersPage />} />
                 <Route path="/wishlist" element={<WishlistPage />} />
+                <Route path="/magic-link-callback" element={<MagicLinkCallbackPage />} />
               </Routes>
             </div>
             <Footer />
