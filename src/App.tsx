@@ -12,6 +12,7 @@ import { CheckoutPage } from './pages/CheckoutPage';
 import { ThankYouPage } from './pages/ThankYouPage';
 import { LoginPage } from './pages/LoginPage';
 import { AccountPage } from './pages/AccountPage';
+import { MyOrdersPage } from './pages/MyOrdersPage';
 export function App() {
   return <AuthProvider>
       <CartProvider>
@@ -28,6 +29,7 @@ export function App() {
                 <Route path="/thank-you" element={<ThankYouPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/account" element={<AccountPage />} />
+                <Route path="/orders" element={<MyOrdersPage />} />
               </Routes>
             </div>
             <Footer />
