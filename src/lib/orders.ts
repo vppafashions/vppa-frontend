@@ -12,6 +12,16 @@ export interface OrderData {
   razorpayOrderId?: string;
   trackingNumber?: string;
   courier?: string;
+  statusTimeline?: string;
+}
+
+export interface StatusTimeline {
+  [key: string]: string | undefined;
+  pending?: string;
+  confirmed?: string;
+  shipped?: string;
+  delivered?: string;
+  cancelled?: string;
 }
 
 export interface OrderDocument extends OrderData {
