@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { SearchIcon, ShoppingBagIcon, MenuIcon, XIcon } from 'lucide-react';
+import { SearchIcon, ShoppingBagIcon, MenuIcon, XIcon, UserIcon } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 import { collections } from '../../data/collections';
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { getCartCount, setIsCartOpen } = useCart();
+  const { user, loading: authLoading } = useAuth();
   const location = useLocation();
   const isHomePage = location.pathname === '/';
   useEffect(() => {
@@ -76,6 +78,17 @@ export function Header() {
                     className={`transition-all duration-500 ${isScrolled ? 'w-4 h-4' : 'w-5 h-5'}`} />
                   
                 </button>
+                {!authLoading && (
+                  <Link
+                    to={user ? '/account' : '/login'}
+                    className="p-2 hover:text-primary transition-colors"
+                    aria-label={user ? 'My Account' : 'Sign In'}>
+                    
+                    <UserIcon
+                      className={`transition-all duration-500 ${isScrolled ? 'w-4 h-4' : 'w-5 h-5'}`} />
+                    
+                  </Link>
+                )}
                 <button
                   className="p-2 hover:text-primary transition-colors relative"
                   onClick={() => setIsCartOpen(true)}
@@ -121,6 +134,14 @@ export function Header() {
                 {collection.name}
               </Link>
           )}
+            <div className="border-t border-border/20 pt-8">
+              <Link
+                to={user ? '/account' : '/login'}
+                className="flex items-center gap-3 hover:text-primary transition-colors">
+                <UserIcon className="w-5 h-5" />
+                {user ? 'My Account' : 'Sign In'}
+              </Link>
+            </div>
           </nav>
         </div>
       }
