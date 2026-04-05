@@ -10,6 +10,8 @@ interface AuthContextType {
   registerWithEmail: (email: string, password: string, name: string) => Promise<void>;
   sendMagicLink: (email: string) => Promise<void>;
   confirmMagicLink: (userId: string, secret: string) => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
+  confirmPasswordReset: (userId: string, secret: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -26,6 +28,10 @@ const AuthContext = createContext<AuthContextType>({
   sendMagicLink: async () => {},
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   confirmMagicLink: async () => {},
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  sendPasswordReset: async () => {},
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  confirmPasswordReset: async () => {},
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   logout: async () => {},
 });
@@ -101,6 +107,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(currentUser);
   };
 
+  const sendPasswordReset = async (email: string) => {
+    const currentUrl = window.location.origin;
+    await account.createRecovery(email, `${currentUrl}/reset-password`);
+  };
+
+  const confirmPasswordReset = async (userId: string, secret: string, password: string) => {
+    await account.updateRecovery(userId, secret, password);
+  };
+
   const logout = async () => {
     try {
       await account.deleteSession('current');
@@ -111,7 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, loginWithGoogle, loginWithEmail, registerWithEmail, sendMagicLink, confirmMagicLink, logout }}>
+    <AuthContext.Provider value={{ user, loading, loginWithGoogle, loginWithEmail, registerWithEmail, sendMagicLink, confirmMagicLink, sendPasswordReset, confirmPasswordReset, logout }}>
       {children}
     </AuthContext.Provider>
   );
