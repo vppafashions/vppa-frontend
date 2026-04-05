@@ -1,5 +1,5 @@
 // Vercel Serverless Function: Cart CRUD operations via Appwrite API key
-import { corsHeaders, listDocuments, createDocument, updateDocument, deleteDocument, COLLECTION_IDS } from './_appwrite.js';
+import { corsHeaders, listDocuments, createDocument, updateDocument, deleteDocument, COLLECTION_IDS, Query } from './_appwrite.js';
 
 function uniqueId() {
   return 'unique()';
@@ -18,8 +18,8 @@ export default async function handler(req, res) {
       if (!userId) return res.status(400).json({ error: 'userId required' });
 
       const data = await listDocuments(collectionId, [
-        `equal("userId", ["${userId}"])`,
-        'limit(100)',
+        Query.equal('userId', userId),
+        Query.limit(100),
       ]);
       return res.status(200).json(data);
     }
@@ -31,11 +31,11 @@ export default async function handler(req, res) {
 
       // Check if same product/size/color exists
       const existing = await listDocuments(collectionId, [
-        `equal("userId", ["${userId}"])`,
-        `equal("productId", ["${productId}"])`,
-        `equal("size", ["${size}"])`,
-        `equal("color", ["${color}"])`,
-        'limit(1)',
+        Query.equal('userId', userId),
+        Query.equal('productId', productId),
+        Query.equal('size', size),
+        Query.equal('color', color),
+        Query.limit(1),
       ]);
 
       if (existing.documents.length > 0) {
@@ -70,8 +70,8 @@ export default async function handler(req, res) {
 
       if (clearAll && userId) {
         const items = await listDocuments(collectionId, [
-          `equal("userId", ["${userId}"])`,
-          'limit(100)',
+          Query.equal('userId', userId),
+          Query.limit(100),
         ]);
         await Promise.all(items.documents.map((doc) => deleteDocument(collectionId, doc.$id)));
         return res.status(200).json({ success: true, deleted: items.documents.length });

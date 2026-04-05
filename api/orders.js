@@ -1,5 +1,5 @@
 // Vercel Serverless Function: Orders operations via Appwrite API key
-import { corsHeaders, listDocuments, getDocument, createDocument, COLLECTION_IDS } from './_appwrite.js';
+import { corsHeaders, listDocuments, getDocument, createDocument, COLLECTION_IDS, Query } from './_appwrite.js';
 
 export default async function handler(req, res) {
   corsHeaders(res);
@@ -21,9 +21,9 @@ export default async function handler(req, res) {
       if (!userId) return res.status(400).json({ error: 'userId or orderId required' });
 
       const data = await listDocuments(collectionId, [
-        `equal("userId", ["${userId}"])`,
-        'orderDesc("$createdAt")',
-        'limit(50)',
+        Query.equal('userId', userId),
+        Query.orderDesc('$createdAt'),
+        Query.limit(50),
       ]);
       return res.status(200).json(data);
     }

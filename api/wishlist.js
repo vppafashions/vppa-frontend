@@ -1,5 +1,5 @@
 // Vercel Serverless Function: Wishlist operations via Appwrite API key
-import { corsHeaders, listDocuments, createDocument, deleteDocument, COLLECTION_IDS } from './_appwrite.js';
+import { corsHeaders, listDocuments, createDocument, deleteDocument, COLLECTION_IDS, Query } from './_appwrite.js';
 
 export default async function handler(req, res) {
   corsHeaders(res);
@@ -14,9 +14,9 @@ export default async function handler(req, res) {
       if (!userId) return res.status(400).json({ error: 'userId required' });
 
       const data = await listDocuments(collectionId, [
-        `equal("userId", ["${userId}"])`,
-        'orderDesc("$createdAt")',
-        'limit(100)',
+        Query.equal('userId', userId),
+        Query.orderDesc('$createdAt'),
+        Query.limit(100),
       ]);
       return res.status(200).json(data);
     }
@@ -28,9 +28,9 @@ export default async function handler(req, res) {
 
       // Check if already in wishlist
       const existing = await listDocuments(collectionId, [
-        `equal("userId", ["${userId}"])`,
-        `equal("productId", ["${productId}"])`,
-        'limit(1)',
+        Query.equal('userId', userId),
+        Query.equal('productId', productId),
+        Query.limit(1),
       ]);
       if (existing.documents.length > 0) {
         return res.status(200).json({ alreadyExists: true, $id: existing.documents[0].$id });

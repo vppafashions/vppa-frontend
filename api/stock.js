@@ -1,5 +1,5 @@
 // Vercel Serverless Function: Stock check via Appwrite API key
-import { corsHeaders, listDocuments, COLLECTION_IDS } from './_appwrite.js';
+import { corsHeaders, listDocuments, COLLECTION_IDS, Query } from './_appwrite.js';
 
 export default async function handler(req, res) {
   corsHeaders(res);
@@ -19,8 +19,8 @@ export default async function handler(req, res) {
     for (const productId of productIds) {
       try {
         const data = await listDocuments(COLLECTION_IDS.products, [
-          `equal("$id", ["${productId}"])`,
-          'limit(1)',
+          Query.equal('$id', productId),
+          Query.limit(1),
         ]);
 
         if (data.documents.length > 0) {
