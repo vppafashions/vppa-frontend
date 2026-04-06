@@ -10,6 +10,8 @@ export interface Product {
   category: string;
   productType?: string;
   sku?: string;
+  fabricCare?: string;
+  returnPolicy?: string;
 }
 
 export const products: Product[] = [
