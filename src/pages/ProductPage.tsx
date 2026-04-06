@@ -73,7 +73,7 @@ export function ProductPage() {
 
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-24">
           {/* Image Gallery */}
-          <div className="lg:w-3/5 flex flex-col-reverse md:flex-row gap-4">
+          <div className="lg:w-3/5 flex flex-col-reverse md:flex-row gap-4 lg:sticky lg:top-24 lg:self-start">
             <div className="flex md:flex-col gap-4 overflow-x-auto md:overflow-visible md:w-24 flex-shrink-0">
               {product.images.map((img, idx) =>
               <button
@@ -89,7 +89,7 @@ export function ProductPage() {
                 </button>
               )}
             </div>
-            <div className="flex-1 aspect-square bg-accent/10">
+            <div className="flex-1 aspect-square bg-accent/10 max-h-[80vh] overflow-hidden">
               <img
                 src={product.images[activeImage]}
                 alt={product.name}
