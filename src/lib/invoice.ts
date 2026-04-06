@@ -1,4 +1,5 @@
 // Invoice generation utilities for customer-facing order invoices
+import { VPPA_LOGO_DATA_URI } from './vppa-logo';
 
 const COMPANY = {
   name: 'VPPA FASHIONS',
@@ -6,7 +7,7 @@ const COMPANY = {
   phone: '+91 XXXXXXXXXX',
   email: 'support@vppafashions.com',
   gstin: 'XXXXXXXXXXXXXXXXX',
-  logo: 'https://res.cloudinary.com/dp6k1cln0/image/upload/v1775456134/vppa/lwuel14vnf23xb0wisvd.jpg',
+  logo: VPPA_LOGO_DATA_URI,
 };
 
 const GST_RATE = 5; // 5% total (2.5% CGST + 2.5% SGST)
