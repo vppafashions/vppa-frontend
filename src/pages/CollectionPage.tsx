@@ -25,7 +25,7 @@ export function CollectionPage() {
   };
   if (!collection) {
     return (
-      <div className="pt-32 text-center h-screen">Collection not found</div>);
+      <div className="py-16 text-center h-screen">Collection not found</div>);
 
   }
   // Get collection-specific quote

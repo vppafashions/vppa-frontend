@@ -28,7 +28,7 @@ export function MagicLinkCallbackPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background pt-20">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-full max-w-md mx-auto px-6 text-center">
           <div className="border border-border/30 rounded-2xl p-8 bg-card/50 backdrop-blur-sm">
             <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-950/30 flex items-center justify-center">
@@ -51,7 +51,7 @@ export function MagicLinkCallbackPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background pt-20">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto mb-4" />
         <p className="text-sm text-muted-foreground">Verifying magic link...</p>

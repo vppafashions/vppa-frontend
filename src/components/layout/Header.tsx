@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { SearchIcon, ShoppingBagIcon, MenuIcon, XIcon, UserIcon, HeartIcon } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
@@ -6,37 +6,27 @@ import { useAuth } from '../../context/AuthContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { collections } from '../../data/collections';
 export function Header() {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { getCartCount, setIsCartOpen } = useCart();
   const { user, loading: authLoading } = useAuth();
   const { wishlistCount } = useWishlist();
   const location = useLocation();
-  const isHomePage = location.pathname === '/';
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 80);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-  useEffect(() => {
+  React.useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location]);
-  const isTransparent = isHomePage && !isScrolled;
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-700 ease-in-out ${isScrolled ? 'py-3 px-4 md:px-8' : 'py-0 px-0'}`}>
+        className="relative top-0 left-0 right-0 z-40 bg-white border-b border-gray-200">
         
         <div
-          className={`transition-all duration-700 ease-in-out ${isScrolled ? 'max-w-3xl mx-auto rounded-full bg-[#0a0a0a]/85 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/10 px-6 md:px-8 text-white' : 'max-w-full mx-0 rounded-none bg-transparent backdrop-blur-none shadow-none border-transparent px-4 md:px-8 ' + (isTransparent ? 'text-white' : 'bg-background/95 backdrop-blur-md text-foreground border-b border-border/20')}`}>
+          className="px-4 md:px-8 text-foreground">
           
           <div
-            className={`container mx-auto transition-all duration-700 ${isScrolled ? 'px-0' : ''}`}>
+            className="container mx-auto">
             
             <div
-              className={`flex items-center justify-between transition-all duration-700 ${isScrolled ? 'h-14' : 'h-20'}`}>
+              className="flex items-center justify-between h-20">
               
               {/* Mobile Menu Button */}
               <button
@@ -45,7 +35,7 @@ export function Header() {
                 aria-label="Open menu">
                 
                 <MenuIcon
-                  className={`transition-all duration-500 ${isScrolled ? 'w-5 h-5' : 'w-6 h-6'}`} />
+                  className="w-6 h-6" />
                 
               </button>
 
@@ -55,7 +45,7 @@ export function Header() {
                 <Link
                   key={collection.id}
                   to={`/collection/${collection.slug}`}
-                  className={`uppercase tracking-widest hover:text-primary transition-all duration-500 ${isScrolled ? 'text-[11px]' : 'text-sm'}`}>
+                  className="uppercase tracking-widest hover:text-primary transition-colors text-sm">
                   
                     {collection.name}
                   </Link>
@@ -65,7 +55,7 @@ export function Header() {
               {/* Logo */}
               <Link
                 to="/"
-                className={`font-magazine font-light tracking-tight text-center flex-1 md:flex-none transition-all duration-700 ${isScrolled ? 'text-2xl' : 'text-4xl'}`}>
+                className="font-magazine font-light tracking-tight text-center flex-1 md:flex-none text-4xl">
                 
                 VPPA
               </Link>
@@ -77,7 +67,7 @@ export function Header() {
                   aria-label="Search">
                   
                   <SearchIcon
-                    className={`transition-all duration-500 ${isScrolled ? 'w-4 h-4' : 'w-5 h-5'}`} />
+                    className="w-5 h-5" />
                   
                 </button>
                 {!authLoading && user && (
@@ -86,10 +76,10 @@ export function Header() {
                     className="p-2 hover:text-primary transition-colors relative"
                     aria-label="Wishlist">
                     <HeartIcon
-                      className={`transition-all duration-500 ${isScrolled ? 'w-4 h-4' : 'w-5 h-5'}`} />
+                      className="w-5 h-5" />
                     {wishlistCount > 0 && (
                       <span
-                        className={`absolute bg-red-500 text-white font-bold rounded-full flex items-center justify-center transition-all duration-500 ${isScrolled ? 'top-0 right-0 text-[8px] w-3.5 h-3.5' : 'top-0 right-0 text-[10px] w-4 h-4'}`}>
+                        className="absolute top-0 right-0 bg-red-500 text-white font-bold rounded-full flex items-center justify-center text-[10px] w-4 h-4">
                         {wishlistCount}
                       </span>
                     )}
@@ -102,7 +92,7 @@ export function Header() {
                     aria-label={user ? 'My Account' : 'Sign In'}>
                     
                     <UserIcon
-                      className={`transition-all duration-500 ${isScrolled ? 'w-4 h-4' : 'w-5 h-5'}`} />
+                      className="w-5 h-5" />
                     
                   </Link>
                 )}
@@ -112,11 +102,11 @@ export function Header() {
                   aria-label="Open cart">
                   
                   <ShoppingBagIcon
-                    className={`transition-all duration-500 ${isScrolled ? 'w-4 h-4' : 'w-5 h-5'}`} />
+                    className="w-5 h-5" />
                   
                   {getCartCount() > 0 &&
                   <span
-                    className={`absolute bg-primary text-primary-foreground font-bold rounded-full flex items-center justify-center transition-all duration-500 ${isScrolled ? 'top-0 right-0 text-[8px] w-3.5 h-3.5' : 'top-0 right-0 text-[10px] w-4 h-4'}`}>
+                    className="absolute top-0 right-0 bg-primary text-primary-foreground font-bold rounded-full flex items-center justify-center text-[10px] w-4 h-4">
                     
                       {getCartCount()}
                     </span>

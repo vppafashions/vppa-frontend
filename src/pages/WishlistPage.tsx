@@ -21,7 +21,7 @@ export function WishlistPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background pt-28 pb-16">
+      <div className="min-h-screen bg-background py-16">
         <div className="container mx-auto px-4 max-w-3xl text-center">
           <HeartIcon className="w-16 h-16 mx-auto mb-6 text-muted-foreground/30" />
           <h1 className="font-magazine text-4xl tracking-tight mb-4">Wishlist</h1>
@@ -38,7 +38,7 @@ export function WishlistPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-28 pb-16">
+    <div className="min-h-screen bg-background py-16">
       <div className="container mx-auto px-4 max-w-4xl">
         <h1 className="font-magazine text-4xl tracking-tight mb-8">
           My Wishlist

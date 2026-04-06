@@ -32,7 +32,7 @@ export function ProductPage() {
     }
   }, [product]);
   if (!product) {
-    return <div className="pt-32 text-center h-screen">Product not found</div>;
+    return <div className="py-16 text-center h-screen">Product not found</div>;
   }
   const handleAddToCart = () => {
     if (!selectedSize) {
@@ -53,7 +53,7 @@ export function ProductPage() {
     setActiveAccordion(activeAccordion === section ? null : section);
   };
   return (
-    <main className="pt-20 pb-24">
+    <main className="pb-24">
       <div className="container mx-auto px-4 md:px-8 py-8">
         {/* Breadcrumbs */}
         <div className="text-xs uppercase tracking-widest text-muted-foreground mb-8 flex gap-2">
