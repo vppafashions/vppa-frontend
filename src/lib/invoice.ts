@@ -2,10 +2,11 @@
 
 const COMPANY = {
   name: 'VPPA FASHIONS',
-  address: 'Bangalore, Karnataka, India',
+  address: 'Ground Floor, Sir M, No.161/1, 100 Feet Rd, 3rd Block, Sir M Vishveswaraya Layout, Jnana Ganga Nagar, Ullal, Bengaluru, Karnataka 560110',
   phone: '+91 XXXXXXXXXX',
   email: 'support@vppafashions.com',
   gstin: 'XXXXXXXXXXXXXXXXX',
+  logo: 'https://res.cloudinary.com/dp6k1cln0/image/upload/v1775456134/vppa/lwuel14vnf23xb0wisvd.jpg',
 };
 
 const GST_RATE = 5; // 5% total (2.5% CGST + 2.5% SGST)
@@ -156,10 +157,7 @@ export function generateInvoiceHTML(order: OrderForInvoice): string {
   <div style="display:flex;justify-content:space-between;align-items:center;border:1px solid #000;padding:10px">
     <div style="display:flex;align-items:center;gap:20px">
       <div style="width:60px;height:60px;display:flex;align-items:center;justify-content:center">
-        <svg viewBox="0 0 100 100" width="60" height="60">
-          <text x="50" y="60" text-anchor="middle" font-size="40" font-weight="bold" font-family="serif">V</text>
-          <path d="M30 20 Q50 5 70 20" stroke="#000" stroke-width="3" fill="none"/>
-        </svg>
+        <img src="${COMPANY.logo}" alt="VPPA" style="width:60px;height:60px;object-fit:contain" />
       </div>
       <h1 style="font-size:18px;font-weight:bold">TAX INVOICE</h1>
     </div>
