@@ -31,6 +31,13 @@ export function ProductPage() {
       setQuantity(1);
     }
   }, [product]);
+
+  // Get images for the currently selected color
+  const currentImages = product
+    ? (product.colorImages && selectedColor && product.colorImages[selectedColor])
+      ? product.colorImages[selectedColor]
+      : product.images
+    : [];
   if (!product) {
     return <div className="py-16 text-center h-screen">Product not found</div>;
   }
@@ -46,7 +53,7 @@ export function ProductPage() {
       size: selectedSize,
       color: selectedColor,
       quantity,
-      image: product.images[0]
+      image: currentImages[0] || product.images[0]
     });
   };
   const toggleAccordion = (section: string) => {
@@ -75,7 +82,7 @@ export function ProductPage() {
           {/* Image Gallery */}
           <div className="lg:w-3/5 flex flex-col-reverse md:flex-row gap-4 lg:sticky lg:top-24 lg:self-start">
             <div className="flex md:flex-col gap-4 overflow-x-auto md:overflow-visible md:w-24 flex-shrink-0">
-              {product.images.map((img, idx) =>
+              {currentImages.map((img, idx) =>
               <button
                 key={idx}
                 onClick={() => setActiveImage(idx)}
@@ -91,7 +98,7 @@ export function ProductPage() {
             </div>
             <div className="flex-1 aspect-square bg-accent/10 max-h-[80vh] overflow-hidden">
               <img
-                src={product.images[activeImage]}
+                src={currentImages[activeImage] || currentImages[0]}
                 alt={product.name}
                 className="w-full h-full object-cover" />
               
@@ -121,7 +128,10 @@ export function ProductPage() {
                 {product.colors.map((color) =>
                 <button
                   key={color}
-                  onClick={() => setSelectedColor(color)}
+                  onClick={() => {
+                    setSelectedColor(color);
+                    setActiveImage(0);
+                  }}
                   className={`w-8 h-8 rounded-full border-2 ${selectedColor === color ? 'border-primary ring-2 ring-primary/20 ring-offset-2 ring-offset-background' : 'border-border'}`}
                   style={{
                     backgroundColor: color

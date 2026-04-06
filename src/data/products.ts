@@ -12,6 +12,7 @@ export interface Product {
   sku?: string;
   fabricCare?: string;
   returnPolicy?: string;
+  colorImages?: Record<string, string[]>;
 }
 
 export const products: Product[] = [
