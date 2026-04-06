@@ -219,12 +219,16 @@ export function ProductPage() {
                 </button>
                 {activeAccordion === 'details' &&
                 <div className="pb-5 text-muted-foreground text-sm leading-relaxed">
-                    <ul className="list-disc pl-4 space-y-2">
-                      <li>Premium imported materials</li>
-                      <li>Dry clean only recommended</li>
-                      <li>Do not bleach</li>
-                      <li>Iron on low heat if necessary</li>
-                    </ul>
+                    {product.fabricCare ? (
+                      <p className="whitespace-pre-line">{product.fabricCare}</p>
+                    ) : (
+                      <ul className="list-disc pl-4 space-y-2">
+                        <li>Premium imported materials</li>
+                        <li>Dry clean only recommended</li>
+                        <li>Do not bleach</li>
+                        <li>Iron on low heat if necessary</li>
+                      </ul>
+                    )}
                   </div>
                 }
               </div>
@@ -242,13 +246,19 @@ export function ProductPage() {
                 </button>
                 {activeAccordion === 'shipping' &&
                 <div className="pb-5 text-muted-foreground text-sm leading-relaxed">
-                    <p className="mb-2">
-                      Complimentary express shipping on all orders.
-                    </p>
-                    <p>
-                      Returns accepted within 14 days of delivery. Items must be
-                      in original condition with tags attached.
-                    </p>
+                    {product.returnPolicy ? (
+                      <p className="whitespace-pre-line">{product.returnPolicy}</p>
+                    ) : (
+                      <>
+                        <p className="mb-2">
+                          Complimentary express shipping on all orders.
+                        </p>
+                        <p>
+                          Returns accepted within 14 days of delivery. Items must be
+                          in original condition with tags attached.
+                        </p>
+                      </>
+                    )}
                   </div>
                 }
               </div>
