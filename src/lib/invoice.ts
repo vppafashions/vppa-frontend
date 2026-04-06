@@ -119,16 +119,35 @@ export function generateInvoiceHTML(order: OrderForInvoice): string {
 <head>
   <title>Tax Invoice ${invoiceNumber}</title>
   <style>
+    @page {
+      size: A4 portrait;
+      margin: 15mm 12mm 15mm 12mm;
+    }
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:Arial,sans-serif; font-size:11px; color:#000; padding:20px; }
+    html, body {
+      width: 210mm;
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+      color: #000;
+      background: #fff;
+    }
+    body { padding: 15mm 12mm; }
     table { width:100%; border-collapse:collapse; }
     td, th { border:1px solid #000; padding:4px 6px; vertical-align:top; }
     .bold { font-weight:bold; }
     .text-right { text-align:right; }
     .text-center { text-align:center; }
     @media print {
-      body { padding:0; }
+      html, body { width: auto; padding: 0; }
       .no-print { display:none !important; }
+    }
+    @media screen {
+      body {
+        max-width: 210mm;
+        min-height: 297mm;
+        margin: 0 auto;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      }
     }
   </style>
 </head>
