@@ -74,38 +74,80 @@ export function CheckoutPage() {
   // Load saved addresses and customer data
   useEffect(() => {
     if (!user) return;
-    // Load addresses
-    getAddresses(user.$id).then((addrs) => {
-      setSavedAddresses(addrs);
-      if (addrs.length > 0) {
-        const defaultAddr = addrs.find((a) => a.isDefault) || addrs[0];
-        setSelectedAddressId(defaultAddr.$id);
-        fillFormFromAddress(defaultAddr);
+
+    // Load both addresses and customer profile in parallel
+    Promise.all([
+      getAddresses(user.$id),
+      getCustomerByUserId(user.$id),
+    ]).then(async ([addrs, customer]) => {
+      // Pre-fill contact & customer details from profile
+      if (customer) {
+        setForm((prev) => ({
+          ...prev,
+          email: customer.email || user.email || '',
+          phone: customer.phone || prev.phone || '',
+          alternatePhone: customer.alternatePhone || '',
+          firstName: customer.firstName || prev.firstName || '',
+          lastName: customer.lastName || prev.lastName || '',
+          companyName: customer.companyName || '',
+          gstin: customer.gstin || '',
+        }));
       } else {
-        setUseNewAddress(true);
-      }
-    });
-    // Load customer profile for contact details
-    getCustomerByUserId(user.$id).then((customer) => {
-      if (!customer) {
         setForm((prev) => ({
           ...prev,
           email: user.email || '',
           firstName: user.name?.split(' ')[0] || '',
           lastName: user.name?.split(' ').slice(1).join(' ') || '',
         }));
+      }
+
+      // If addresses collection has entries, use them
+      if (addrs.length > 0) {
+        setSavedAddresses(addrs);
+        const defaultAddr = addrs.find((a) => a.isDefault) || addrs[0];
+        setSelectedAddressId(defaultAddr.$id);
+        fillFormFromAddress(defaultAddr);
         return;
       }
-      setForm((prev) => ({
-        ...prev,
-        email: customer.email || user.email || '',
-        phone: customer.phone || prev.phone || '',
-        alternatePhone: customer.alternatePhone || '',
-        firstName: prev.firstName || customer.firstName || '',
-        lastName: prev.lastName || customer.lastName || '',
-        companyName: customer.companyName || '',
-        gstin: customer.gstin || '',
-      }));
+
+      // No saved addresses — check if customer profile has a shipping address
+      // and auto-create an address entry so it appears as a selectable card
+      if (customer?.shippingAddress && customer.shippingCity && customer.shippingState && customer.shippingPincode) {
+        const newAddr = await createAddress({
+          userId: user.$id,
+          label: 'Home',
+          firstName: customer.firstName || '',
+          lastName: customer.lastName || '',
+          phone: customer.phone || '',
+          address: customer.shippingAddress,
+          landmark: customer.landmark || '',
+          city: customer.shippingCity,
+          state: customer.shippingState,
+          pincode: customer.shippingPincode,
+          country: customer.shippingCountry || 'India',
+          isDefault: true,
+        });
+
+        if (newAddr) {
+          setSavedAddresses([newAddr]);
+          setSelectedAddressId(newAddr.$id);
+          fillFormFromAddress(newAddr);
+        } else {
+          // Fallback: just pre-fill the form from customer data
+          setUseNewAddress(true);
+          setForm((prev) => ({
+            ...prev,
+            shippingAddress: customer.shippingAddress || '',
+            shippingLandmark: customer.landmark || '',
+            shippingCity: customer.shippingCity || '',
+            shippingState: customer.shippingState || '',
+            shippingPincode: customer.shippingPincode || '',
+            shippingCountry: customer.shippingCountry || 'India',
+          }));
+        }
+      } else {
+        setUseNewAddress(true);
+      }
     });
   }, [user]);
 
