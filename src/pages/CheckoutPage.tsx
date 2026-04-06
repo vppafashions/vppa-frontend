@@ -322,7 +322,7 @@ export function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <main className="pt-32 pb-24 min-h-screen flex flex-col items-center justify-center text-center px-4">
+      <main className="py-24 min-h-screen flex flex-col items-center justify-center text-center px-4">
         <h1 className="font-serif text-4xl mb-6">Your Bag is Empty</h1>
         <p className="text-muted-foreground mb-8">
           Add items to your bag to proceed to checkout.
@@ -335,7 +335,7 @@ export function CheckoutPage() {
   }
 
   return (
-    <main className="pt-24 pb-24 bg-background min-h-screen">
+    <main className="py-12 bg-background min-h-screen">
       <div className="container mx-auto px-4 md:px-8 max-w-6xl">
         <h1 className="font-serif text-3xl md:text-4xl mb-12 text-center">
           Secure Checkout

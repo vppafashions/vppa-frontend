@@ -94,7 +94,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background pt-20">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md mx-auto px-6">
         <div className="text-center mb-10">
           <h1 className="font-magazine text-5xl tracking-tight mb-3">VPPA</h1>

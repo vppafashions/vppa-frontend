@@ -46,7 +46,7 @@ export function ResetPasswordPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background pt-20">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-full max-w-md mx-auto px-6 text-center">
           <div className="border border-border/30 rounded-2xl p-8 bg-card/50 backdrop-blur-sm">
             <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-950/30 flex items-center justify-center">
@@ -72,7 +72,7 @@ export function ResetPasswordPage() {
 
   if (!userId || !secret) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background pt-20">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-full max-w-md mx-auto px-6 text-center">
           <div className="border border-border/30 rounded-2xl p-8 bg-card/50 backdrop-blur-sm">
             <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-950/30 flex items-center justify-center">
@@ -97,7 +97,7 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background pt-20">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md mx-auto px-6">
         <div className="text-center mb-10">
           <h1 className="font-magazine text-5xl tracking-tight mb-3">VPPA</h1>

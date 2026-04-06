@@ -183,7 +183,7 @@ export function AccountPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-28 pb-16">
+    <div className="min-h-screen bg-background py-16">
       <div className="container mx-auto px-4 max-w-2xl">
         <h1 className="font-magazine text-4xl tracking-tight mb-8">My Account</h1>
 
