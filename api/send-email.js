@@ -142,7 +142,8 @@ function buildOrderConfirmationEmail(customerName, orderId, items, total) {
       <p style="color:#374151;font-size:14px;line-height:1.6;">You can track your order status anytime in your <a href="https://vppafashions.com/my-orders" style="color:#3b82f6;text-decoration:none;font-weight:600;">My Orders</a> page.</p>
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;"/>
       <p style="color:#9ca3af;font-size:12px;text-align:center;margin:0;">
-        VPPA Fashions | Ground Floor, Sir M, No.161, Visvesvaraya Layout, Jnana Ganga Nagar, Ullal, Bengaluru, Karnataka 560110
+        VPPA Fashions | No.161/1, Ground Floor, 100 Feet Rd, 3rd Block, Sir M Vishveswaraya Layout, Ullal, Bengaluru, Karnataka 560110
+        <br/>Phone: +91 90716 91999 | GSTIN: 29DLFPG6129H1ZY
         <br/>Email: vppafashions@gmail.com
       </p>
     </div>

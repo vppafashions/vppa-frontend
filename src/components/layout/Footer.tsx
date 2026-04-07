@@ -21,11 +21,12 @@ export function Footer() {
               <p className="text-primary text-xs uppercase tracking-widest font-semibold mb-2">
                 Visit Us
               </p>
-              <p>Ground Floor, Sir M, No.161/1,</p>
+              <p>No.161/1, Ground Floor,</p>
               <p>100 Feet Rd, 3rd Block,</p>
               <p>Sir M Vishveswaraya Layout,</p>
-              <p>Jnana Ganga Nagar, Ullal,</p>
-              <p>Bengaluru, Karnataka 560110</p>
+              <p>Ullal, Bengaluru, Karnataka 560110</p>
+              <p className="mt-2">Phone: +91 90716 91999</p>
+              <p>GSTIN: 29DLFPG6129H1ZY</p>
             </div>
           </div>
 
