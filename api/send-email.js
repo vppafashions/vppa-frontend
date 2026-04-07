@@ -7,7 +7,26 @@ const PICA_CONNECTION_KEY = process.env.PICA_GMAIL_CONNECTION_KEY;
 const PICA_ACTION_ID = 'conn_mod_def::GGXAjWkZO8U::uMc1LQIHTTKzeMm3rLL5gQ';
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'vppafashions@gmail.com';
 
+function buildRawMime(to, subject, htmlBody) {
+  const mimeMessage = [
+    `To: ${to}`,
+    `Subject: ${subject}`,
+    'MIME-Version: 1.0',
+    'Content-Type: text/html; charset=UTF-8',
+    '',
+    htmlBody,
+  ].join('\r\n');
+
+  return Buffer.from(mimeMessage)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
+}
+
 async function sendEmail(to, subject, body) {
+  const raw = buildRawMime(to, subject, body);
+
   const response = await fetch(PICA_API_URL, {
     method: 'POST',
     headers: {
@@ -17,10 +36,7 @@ async function sendEmail(to, subject, body) {
       'x-pica-action-id': PICA_ACTION_ID,
     },
     body: JSON.stringify({
-      to,
-      subject,
-      body,
-      mimeType: 'text/html',
+      raw,
       connectionKey: PICA_CONNECTION_KEY,
     }),
   });
