@@ -10,10 +10,10 @@ const COMPANY = {
   logo: VPPA_LOGO_DATA_URI,
 };
 
-const GST_RATE = 5; // 5% total (2.5% CGST + 2.5% SGST)
-const CGST_RATE = 2.5;
-const SGST_RATE = 2.5;
-const HSN_CODE = '60062200';
+const DEFAULT_GST_RATE = 5; // 5% total (2.5% CGST + 2.5% SGST)
+const DEFAULT_CGST_RATE = 2.5;
+const DEFAULT_SGST_RATE = 2.5;
+const DEFAULT_HSN_CODE = '60062200';
 
 function numberToWords(num: number): string {
   if (num === 0) return 'Zero Rupees Only';
@@ -63,6 +63,15 @@ interface OrderForInvoice {
   notes: string;
 }
 
+interface HsnTaxEntry {
+  hsn: string;
+  cgstRate: number;
+  sgstRate: number;
+  taxable: number;
+  cgst: number;
+  sgst: number;
+}
+
 export function generateInvoiceHTML(order: OrderForInvoice): string {
   let items: OrderItem[] = [];
   try {
@@ -80,21 +89,42 @@ export function generateInvoiceHTML(order: OrderForInvoice): string {
   const invoiceNumber = `INV-${order.$id.slice(0, 8).toUpperCase()}`;
   const orderNumber = `#${order.$id.slice(0, 8).toUpperCase()}`;
 
-  // Calculate tax breakdown
-  const subtotal = order.total;
-  const taxableAmount = Math.round((subtotal / (1 + GST_RATE / 100)) * 100) / 100;
-  const totalTax = subtotal - taxableAmount;
-  const cgstAmount = Math.round((totalTax / 2) * 100) / 100;
-  const sgstAmount = totalTax - cgstAmount;
-
+  // Fetch HSN codes from the product data or use defaults
+  // Each item may have hsnCode from the product; we'll look it up
   const formatRs = (amount: number) => `Rs. ${amount.toFixed(2)}`;
+
+  // Build per-item tax calculations and HSN summary
+  const hsnMap = new Map<string, HsnTaxEntry>();
+  let totalTaxableAmount = 0;
+  let totalCgst = 0;
+  let totalSgst = 0;
 
   const itemRows = items.map((item) => {
     const lineTotal = item.price * item.quantity;
-    const lineTaxable = Math.round((lineTotal / (1 + GST_RATE / 100)) * 100) / 100;
+    // Use per-item HSN code if available, otherwise default
+    const itemHsn = (item as OrderItem & { hsnCode?: string }).hsnCode || DEFAULT_HSN_CODE;
+    const itemCgstRate = DEFAULT_CGST_RATE;
+    const itemSgstRate = DEFAULT_SGST_RATE;
+    const itemGstRate = itemCgstRate + itemSgstRate;
+
+    const lineTaxable = Math.round((lineTotal / (1 + itemGstRate / 100)) * 100) / 100;
     const lineTax = lineTotal - lineTaxable;
     const lineCgst = Math.round((lineTax / 2) * 100) / 100;
     const lineSgst = lineTax - lineCgst;
+
+    totalTaxableAmount += lineTaxable;
+    totalCgst += lineCgst;
+    totalSgst += lineSgst;
+
+    // Accumulate HSN summary
+    const existing = hsnMap.get(itemHsn);
+    if (existing) {
+      existing.taxable += lineTaxable;
+      existing.cgst += lineCgst;
+      existing.sgst += lineSgst;
+    } else {
+      hsnMap.set(itemHsn, { hsn: itemHsn, cgstRate: itemCgstRate, sgstRate: itemSgstRate, taxable: lineTaxable, cgst: lineCgst, sgst: lineSgst });
+    }
 
     return `
       <tr>
@@ -102,14 +132,20 @@ export function generateInvoiceHTML(order: OrderForInvoice): string {
         <td style="border:1px solid #000;padding:4px 6px;text-align:center">${item.quantity}</td>
         <td style="border:1px solid #000;padding:4px 6px;text-align:right">${formatRs(item.price)}</td>
         <td style="border:1px solid #000;padding:4px 6px;text-align:right">${formatRs(lineTaxable)}</td>
-        <td style="border:1px solid #000;padding:4px 6px;text-align:center">${HSN_CODE}</td>
-        <td style="border:1px solid #000;padding:4px 6px;text-align:center">${GST_RATE}%</td>
-        <td style="border:1px solid #000;padding:4px 6px;text-align:right">${formatRs(lineCgst)}</td>
-        <td style="border:1px solid #000;padding:4px 6px;text-align:right">${formatRs(lineSgst)}</td>
+        <td style="border:1px solid #000;padding:4px 6px;text-align:center">${itemHsn}</td>
+        <td style="border:1px solid #000;padding:4px 6px;text-align:center">${itemGstRate}%</td>
+        <td style="border:1px solid #000;padding:4px 6px;text-align:right">${formatRs(lineCgst)}<br/><span style="font-size:9px;color:#666">@${itemCgstRate}%</span></td>
+        <td style="border:1px solid #000;padding:4px 6px;text-align:right">${formatRs(lineSgst)}<br/><span style="font-size:9px;color:#666">@${itemSgstRate}%</span></td>
         <td style="border:1px solid #000;padding:4px 6px;text-align:right">${formatRs(lineTotal)}</td>
       </tr>
     `;
   }).join('');
+
+  const subtotal = order.total;
+  const taxableAmount = totalTaxableAmount;
+  const cgstAmount = totalCgst;
+  const sgstAmount = totalSgst;
+  const totalTax = cgstAmount + sgstAmount;
 
   // Extract billing info from notes
   const noteParts = order.notes ? order.notes.split(' | ').filter(Boolean) : [];
@@ -273,21 +309,23 @@ export function generateInvoiceHTML(order: OrderForInvoice): string {
               </tr>
             </thead>
             <tbody>
+              ${Array.from(hsnMap.values()).map(entry => `
               <tr>
-                <td style="border:1px solid #000;padding:3px;text-align:center">${HSN_CODE}</td>
-                <td style="border:1px solid #000;padding:3px;text-align:center">${CGST_RATE}%</td>
-                <td style="border:1px solid #000;padding:3px;text-align:center">${cgstAmount.toFixed(2)}</td>
-                <td style="border:1px solid #000;padding:3px;text-align:center">${SGST_RATE}%</td>
-                <td style="border:1px solid #000;padding:3px;text-align:center">${sgstAmount.toFixed(2)}</td>
-              </tr>
+                <td style="border:1px solid #000;padding:3px;text-align:center">${entry.hsn}</td>
+                <td style="border:1px solid #000;padding:3px;text-align:center">${entry.cgstRate}%</td>
+                <td style="border:1px solid #000;padding:3px;text-align:center">${entry.cgst.toFixed(2)}</td>
+                <td style="border:1px solid #000;padding:3px;text-align:center">${entry.sgstRate}%</td>
+                <td style="border:1px solid #000;padding:3px;text-align:center">${entry.sgst.toFixed(2)}</td>
+              </tr>`).join('')}
             </tbody>
           </table>
         </td>
         <td style="width:50%;vertical-align:top;padding:6px">
           <table style="width:100%;border-collapse:collapse;font-size:11px">
             <tr><td>Subtotal</td><td style="text-align:right">${formatRs(taxableAmount)}</td></tr>
-            <tr><td>CGST @ ${CGST_RATE}%</td><td style="text-align:right">${formatRs(cgstAmount)}</td></tr>
-            <tr><td>SGST @ ${SGST_RATE}%</td><td style="text-align:right">${formatRs(sgstAmount)}</td></tr>
+            ${Array.from(hsnMap.values()).map(entry => `
+            <tr><td>CGST @ ${entry.cgstRate}% (${entry.hsn})</td><td style="text-align:right">${formatRs(entry.cgst)}</td></tr>
+            <tr><td>SGST @ ${entry.sgstRate}% (${entry.hsn})</td><td style="text-align:right">${formatRs(entry.sgst)}</td></tr>`).join('')}
             <tr><td>Shipping</td><td style="text-align:right">Rs. 0.00</td></tr>
             <tr style="font-weight:bold;font-size:13px"><td>Grand Total</td><td style="text-align:right">${formatRs(subtotal)}</td></tr>
           </table>
