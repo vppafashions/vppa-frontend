@@ -6,6 +6,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import { Button } from '../components/ui/Button';
+import { SizeGuideModal } from '../components/products/SizeGuideModal';
 export function ProductPage() {
   const { id } = useParams<{
     id: string;
@@ -22,6 +23,7 @@ export function ProductPage() {
   const [activeAccordion, setActiveAccordion] = useState<string | null>(
     'description'
   );
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   useEffect(() => {
     window.scrollTo(0, 0);
     if (product) {
@@ -146,9 +148,14 @@ export function ProductPage() {
             <div className="mb-8">
               <div className="flex justify-between mb-3">
                 <span className="text-sm uppercase tracking-widest">Size</span>
-                <button className="text-xs uppercase tracking-widest text-muted-foreground underline underline-offset-4">
-                  Size Guide
-                </button>
+                {product.sizeGuideId && (
+                  <button
+                    onClick={() => setSizeGuideOpen(true)}
+                    className="text-xs uppercase tracking-widest text-muted-foreground underline underline-offset-4"
+                  >
+                    Size Guide
+                  </button>
+                )}
               </div>
               <div className="grid grid-cols-4 gap-3">
                 {product.sizes.map((size) =>
@@ -276,6 +283,13 @@ export function ProductPage() {
           </div>
         </div>
       </div>
+      {product.sizeGuideId && (
+        <SizeGuideModal
+          sizeGuideId={product.sizeGuideId}
+          isOpen={sizeGuideOpen}
+          onClose={() => setSizeGuideOpen(false)}
+        />
+      )}
     </main>);
 
 }

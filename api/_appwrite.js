@@ -13,6 +13,7 @@ const COLLECTION_IDS = {
   wishlists: 'wishlists',
   products: 'products',
   addresses: 'addresses',
+  sizeGuides: 'size-guides',
 };
 
 function headers() {
