@@ -7,6 +7,7 @@ import {
   removeCartItem as removeCartItemFromDb,
   clearCartItems,
 } from '../lib/cart';
+import { trackAddToCart, trackRemoveFromCart } from '../lib/analytics';
 
 export interface CartItem {
   id: string;
@@ -145,6 +146,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         });
       }
 
+      trackAddToCart({ id: cartItem.productId, name: cartItem.name, price: cartItem.price, quantity: cartItem.quantity });
       return [...prevItems, cartItem];
     });
     setIsCartOpen(true);
@@ -153,6 +155,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const removeFromCart = (id: string) => {
     setItems((prevItems) => {
       const item = prevItems.find((i) => i.id === id);
+      if (item) {
+        trackRemoveFromCart({ id: item.productId, name: item.name, price: item.price });
+      }
       if (item?.docId && user) {
         removeCartItemFromDb(item.docId);
       }
