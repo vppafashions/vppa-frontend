@@ -9,6 +9,7 @@ import { createOrder } from '../lib/orders';
 import { initiateRazorpayPayment } from '../lib/razorpay';
 import { checkCartStock } from '../lib/stock';
 import { getAddresses, createAddress, type Address } from '../lib/addresses';
+import { trackBeginCheckout, trackPurchase } from '../lib/analytics';
 
 interface CheckoutForm {
   email: string;
@@ -70,6 +71,13 @@ export function CheckoutPage() {
   const subtotal = getCartTotal();
   const shipping = 0;
   const total = subtotal + shipping;
+
+  // Track begin_checkout event
+  useEffect(() => {
+    if (items.length > 0) {
+      trackBeginCheckout(total);
+    }
+  }, []);
 
   // Load saved addresses and customer data
   useEffect(() => {
@@ -309,6 +317,7 @@ export function CheckoutPage() {
         razorpayOrderId: response.razorpay_order_id,
       });
 
+      trackPurchase({ orderId: response.razorpay_order_id, value: total, tax: 0 });
       clearCart();
       navigate('/thank-you');
     } catch (error) {

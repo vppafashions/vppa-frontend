@@ -17,11 +17,13 @@ import { MyOrdersPage } from './pages/MyOrdersPage';
 import { WishlistPage } from './pages/WishlistPage';
 import { MagicLinkCallbackPage } from './pages/MagicLinkCallbackPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { Analytics } from './components/Analytics';
 export function App() {
   return <AuthProvider>
       <WishlistProvider>
       <CartProvider>
         <Router>
+          <Analytics />
           <div className="min-h-screen flex flex-col font-sans text-foreground bg-background selection:bg-primary selection:text-primary-foreground">
             <Header />
             <CartDrawer />

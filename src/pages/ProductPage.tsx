@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import { Button } from '../components/ui/Button';
 import { SizeGuideModal } from '../components/products/SizeGuideModal';
+import { trackViewItem } from '../lib/analytics';
 export function ProductPage() {
   const { id } = useParams<{
     id: string;
@@ -31,6 +32,7 @@ export function ProductPage() {
       setSelectedColor(product.colors[0]);
       setActiveImage(0);
       setQuantity(1);
+      trackViewItem({ id: product.id, name: product.name, price: product.price });
     }
   }, [product]);
 
