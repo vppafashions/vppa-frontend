@@ -108,9 +108,9 @@ export function generateInvoiceHTML(order: OrderForInvoice): string {
     const itemGstRate = itemCgstRate + itemSgstRate;
 
     const lineTaxable = Math.round((lineTotal / (1 + itemGstRate / 100)) * 100) / 100;
-    const lineTax = lineTotal - lineTaxable;
+    const lineTax = Math.round((lineTotal - lineTaxable) * 100) / 100;
     const lineCgst = Math.round((lineTax / 2) * 100) / 100;
-    const lineSgst = lineTax - lineCgst;
+    const lineSgst = Math.round((lineTax - lineCgst) * 100) / 100;
 
     totalTaxableAmount += lineTaxable;
     totalCgst += lineCgst;
