@@ -10,6 +10,7 @@ import { initiateRazorpayPayment } from '../lib/razorpay';
 import { checkCartStock } from '../lib/stock';
 import { getAddresses, createAddress, type Address } from '../lib/addresses';
 import { trackBeginCheckout, trackPurchase } from '../lib/analytics';
+import { validateCoupon, applyCouponUsage, type CouponValidation } from '../lib/coupons';
 
 interface CheckoutForm {
   email: string;
@@ -68,9 +69,14 @@ export function CheckoutPage() {
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [useNewAddress, setUseNewAddress] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [couponData, setCouponData] = useState<CouponValidation | null>(null);
+  const [couponError, setCouponError] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
   const subtotal = getCartTotal();
   const shipping = 0;
-  const total = subtotal + shipping;
+  const discount = couponData?.discount || 0;
+  const total = subtotal + shipping - discount;
 
   // Track begin_checkout event
   useEffect(() => {
@@ -199,6 +205,31 @@ export function CheckoutPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponError('');
+    setCouponLoading(true);
+    try {
+      const result = await validateCoupon(
+        couponCode,
+        items.map((item) => ({ productId: item.productId, price: item.price, quantity: item.quantity })),
+        subtotal
+      );
+      setCouponData(result);
+    } catch (error) {
+      setCouponData(null);
+      setCouponError(error instanceof Error ? error.message : 'Invalid coupon');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setCouponData(null);
+    setCouponCode('');
+    setCouponError('');
+  };
+
   const [paymentError, setPaymentError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -265,8 +296,9 @@ export function CheckoutPage() {
 
     try {
       // Step 1-3: Server creates Razorpay order, opens checkout, verifies signature
+      const payAmount = total > 0 ? total : 0;
       const response = await initiateRazorpayPayment({
-        amount: total, // in rupees — razorpay.ts converts to paise
+        amount: payAmount, // in rupees — razorpay.ts converts to paise
         receipt: `order_${Date.now()}`,
         prefill: {
           name: `${form.firstName} ${form.lastName}`,
@@ -316,6 +348,11 @@ export function CheckoutPage() {
         razorpayPaymentId: response.razorpay_payment_id,
         razorpayOrderId: response.razorpay_order_id,
       });
+
+      // Increment coupon usage if applied
+      if (couponData?.couponId) {
+        applyCouponUsage(couponData.couponId).catch(() => {});
+      }
 
       trackPurchase({ orderId: response.razorpay_order_id, value: total, tax: 0 });
       clearCart();
@@ -713,6 +750,65 @@ export function CheckoutPage() {
                 ))}
               </ul>
 
+              {/* Coupon Code Input */}
+              <div className="border-t border-border/50 pt-6 mb-6">
+                <h3 className="text-xs uppercase tracking-widest font-semibold mb-3">Coupon Code</h3>
+                {couponData ? (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="font-mono font-bold text-green-800 text-sm">{couponData.code}</span>
+                        <span className="text-green-600 text-xs ml-2">
+                          {couponData.discountType === 'percentage'
+                            ? `${couponData.discountValue}% off`
+                            : `₹${couponData.discountValue.toLocaleString('en-IN')} off`}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveCoupon}
+                        className="text-red-500 text-xs hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    {couponData.description && (
+                      <p className="text-green-600 text-xs mt-1">{couponData.description}</p>
+                    )}
+                    <p className="text-green-700 font-medium text-sm mt-1">
+                      You save ₹{discount.toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        placeholder="Enter coupon code"
+                        value={couponCode}
+                        onChange={(e) => {
+                          setCouponCode(e.target.value.toUpperCase());
+                          setCouponError('');
+                        }}
+                        className="font-mono uppercase text-sm"
+                      />
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={handleApplyCoupon}
+                        disabled={couponLoading || !couponCode.trim()}
+                        className="shrink-0 px-4 text-sm"
+                      >
+                        {couponLoading ? 'Checking...' : 'Apply'}
+                      </Button>
+                    </div>
+                    {couponError && (
+                      <p className="text-red-500 text-xs mt-2">{couponError}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-3 text-sm border-t border-border/50 pt-6 mb-6">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
@@ -724,6 +820,12 @@ export function CheckoutPage() {
                     Complimentary
                   </span>
                 </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Coupon Discount</span>
+                    <span>-₹{discount.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-between items-center border-t border-border/50 pt-6">
