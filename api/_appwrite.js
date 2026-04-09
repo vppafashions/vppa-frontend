@@ -15,6 +15,7 @@ const COLLECTION_IDS = {
   addresses: 'addresses',
   sizeGuides: 'size-guides',
   returns: 'returns',
+  coupons: 'coupons',
 };
 
 function headers() {
