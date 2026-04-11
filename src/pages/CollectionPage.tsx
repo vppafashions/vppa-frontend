@@ -132,10 +132,14 @@ export function CollectionPage() {
               to={`/product/${heroProduct.id}`}
               className="block w-full h-full">
               
-                <img
-                src={heroProduct.images[0]}
-                alt={heroProduct.name}
-                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
+                {heroProduct.images[0] ? (
+                  <img
+                  src={heroProduct.images[0]}
+                  alt={heroProduct.name}
+                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
+                ) : (
+                  <div className="w-full h-full bg-accent/10 flex items-center justify-center text-muted-foreground">No Image</div>
+                )}
               
                 <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </Link>
@@ -153,9 +157,10 @@ export function CollectionPage() {
               <p className="text-2xl font-light mb-8">
                 ₹{heroProduct.price.toLocaleString('en-IN')}
               </p>
-              <p className="text-muted-foreground leading-relaxed mb-12 font-light text-lg">
-                {heroProduct.description}
-              </p>
+              <div
+                className="text-muted-foreground leading-relaxed mb-12 font-light text-lg line-clamp-4"
+                dangerouslySetInnerHTML={{ __html: heroProduct.description }}
+              />
               <Link
               to={`/product/${heroProduct.id}`}
               className="inline-flex items-center gap-4 text-sm tracking-[0.2em] uppercase group/link w-fit">
