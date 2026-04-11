@@ -23,7 +23,7 @@ export async function checkProductStock(
   variant?: { size: string; color: string },
 ): Promise<StockInfo> {
   try {
-    const response = await fetch(`${API_BASE}/api/stock`, {
+    const response = await fetch(`${API_BASE}/api/inventory?action=stock`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -51,7 +51,7 @@ export async function checkCartStock(
     const variants = cartItems.map((item) =>
       item.size && item.color ? { size: item.size, color: item.color } : undefined,
     );
-    const response = await fetch(`${API_BASE}/api/stock`, {
+    const response = await fetch(`${API_BASE}/api/inventory?action=stock`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ productIds, variants }),
