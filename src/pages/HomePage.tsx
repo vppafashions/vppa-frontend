@@ -4,7 +4,14 @@ import { CollectionShowcase } from '../components/home/CollectionShowcase';
 import { FeaturedProducts } from '../components/home/FeaturedProducts';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { useDocumentHead } from '../hooks/useDocumentHead';
 export function HomePage() {
+  useDocumentHead({
+    title: 'VPPA Fashions — Premium Men\'s Clothing | Velocity, Presence, Power, Attitude',
+    description: 'VPPA Fashions — India\'s premium men\'s clothing brand. Shop luxury sweatshirts, linen shirts, hoodies, cargo pants & full-sleeve shirts.',
+    canonical: 'https://vppafashions.com/',
+  });
+
   return (
     <main className="bg-background">
       <HeroBanner />

@@ -8,6 +8,8 @@ import { useWishlist } from '../context/WishlistContext';
 import { Button } from '../components/ui/Button';
 import { SizeGuideModal } from '../components/products/SizeGuideModal';
 import { trackViewItem } from '../lib/analytics';
+import { useDocumentHead } from '../hooks/useDocumentHead';
+import { ProductJsonLd } from '../components/seo/ProductJsonLd';
 export function ProductPage() {
   const { id } = useParams<{
     id: string;
@@ -25,6 +27,14 @@ export function ProductPage() {
     'description'
   );
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+  useDocumentHead({
+    title: product ? `${product.name} | VPPA Fashions` : 'Product | VPPA Fashions',
+    description: product ? `${product.description.slice(0, 155)}` : 'Premium menswear from VPPA Fashions',
+    canonical: product ? `https://vppafashions.com/product/${product.id}` : undefined,
+    ogType: 'product',
+    ogImage: product?.images[0],
+  });
+
   useEffect(() => {
     window.scrollTo(0, 0);
     if (product) {
@@ -292,6 +302,7 @@ export function ProductPage() {
           onClose={() => setSizeGuideOpen(false)}
         />
       )}
+      {product && <ProductJsonLd product={product} />}
     </main>);
 
 }
