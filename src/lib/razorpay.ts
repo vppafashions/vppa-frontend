@@ -1,8 +1,8 @@
 // Razorpay Standard Checkout Integration
 // Flow per docs: https://razorpay.com/docs/payments/payment-gateway/web-integration/standard/integration-steps/
-// 1. Server creates Razorpay order (POST /api/create-order)
+// 1. Server creates Razorpay order (POST /api/payments?action=create-order)
 // 2. Frontend opens checkout with order_id
-// 3. Server verifies payment signature (POST /api/verify-payment)
+// 3. Server verifies payment signature (POST /api/payments?action=verify-payment)
 
 interface PaymentOptions {
   amount: number; // in rupees (will be converted to paise)
@@ -52,7 +52,7 @@ if (typeof window !== 'undefined') {
 
 // Step 1: Create order on server (server calls Razorpay Orders API with key_secret)
 async function createRazorpayOrder(amountInPaise: number, receipt?: string, notes?: Record<string, string>) {
-  const response = await fetch('/api/create-order', {
+  const response = await fetch('/api/payments?action=create-order', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -82,7 +82,7 @@ async function verifyPaymentSignature(data: {
   razorpay_payment_id: string;
   razorpay_signature: string;
 }) {
-  const response = await fetch('/api/verify-payment', {
+  const response = await fetch('/api/payments?action=verify-payment', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),

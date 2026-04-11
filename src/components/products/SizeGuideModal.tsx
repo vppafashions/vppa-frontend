@@ -25,7 +25,7 @@ export function SizeGuideModal({ sizeGuideId, isOpen, onClose }: SizeGuideModalP
     if (!isOpen || !sizeGuideId) return;
     setLoading(true);
     setError('');
-    fetch(`/api/size-guides?id=${encodeURIComponent(sizeGuideId)}`)
+    fetch(`/api/inventory?action=size-guide&id=${encodeURIComponent(sizeGuideId)}`)
       .then((res) => {
         if (!res.ok) throw new Error('Failed to load size guide');
         return res.json();
