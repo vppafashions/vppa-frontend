@@ -18,6 +18,7 @@ import { WishlistPage } from './pages/WishlistPage';
 import { MagicLinkCallbackPage } from './pages/MagicLinkCallbackPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { Analytics } from './components/Analytics';
+import { CookieConsent } from './components/seo/CookieConsent';
 export function App() {
   return <AuthProvider>
       <WishlistProvider>
@@ -43,6 +44,7 @@ export function App() {
               </Routes>
             </div>
             <Footer />
+            <CookieConsent />
           </div>
         </Router>
       </CartProvider>

@@ -4,6 +4,7 @@ import { ArrowDownIcon, ArrowRightIcon } from 'lucide-react';
 import { collections } from '../data/collections';
 import { products } from '../data/products';
 import { ProductCard } from '../components/products/ProductCard';
+import { useDocumentHead } from '../hooks/useDocumentHead';
 export function CollectionPage() {
   const { slug } = useParams<{
     slug: string;
@@ -15,6 +16,13 @@ export function CollectionPage() {
   // Determine next collection for the teaser
   const nextCollectionIndex = (collectionIndex + 1) % collections.length;
   const nextCollection = collections[nextCollectionIndex];
+  useDocumentHead({
+    title: collection ? `${collection.name} Collection | VPPA Fashions` : 'Collection | VPPA Fashions',
+    description: collection?.description,
+    canonical: collection ? `https://vppafashions.com/collection/${collection.slug}` : undefined,
+    ogImage: collection?.image,
+  });
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [slug]);
