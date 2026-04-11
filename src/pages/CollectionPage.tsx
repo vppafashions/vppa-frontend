@@ -2,9 +2,10 @@ import React, { useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowDownIcon, ArrowRightIcon } from 'lucide-react';
 import { collections } from '../data/collections';
-import { products } from '../data/products';
+import { products as fallbackProducts } from '../data/products';
 import { ProductCard } from '../components/products/ProductCard';
 import { useDocumentHead } from '../hooks/useDocumentHead';
+import { useProducts } from '../hooks/useProducts';
 export function CollectionPage() {
   const { slug } = useParams<{
     slug: string;
@@ -12,7 +13,16 @@ export function CollectionPage() {
   const contentRef = useRef<HTMLDivElement>(null);
   const collectionIndex = collections.findIndex((c) => c.slug === slug);
   const collection = collections[collectionIndex];
-  const collectionProducts = products.filter((p) => p.collectionSlug === slug);
+
+  // Fetch products from Appwrite — try both slug formats (velocity and velocity_men)
+  const { products: apiProducts, loading } = useProducts({ collection: slug ? `${slug}_men` : undefined });
+  const { products: apiProducts2 } = useProducts({ collection: slug });
+
+  // Merge and deduplicate
+  const mergedApi = [...apiProducts, ...apiProducts2].filter((p, i, arr) => arr.findIndex((x) => x.id === p.id) === i);
+  const collectionProducts = mergedApi.length > 0
+    ? mergedApi
+    : fallbackProducts.filter((p) => p.collectionSlug === slug);
   // Determine next collection for the teaser
   const nextCollectionIndex = (collectionIndex + 1) % collections.length;
   const nextCollection = collections[nextCollectionIndex];
