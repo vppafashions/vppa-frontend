@@ -33,9 +33,14 @@ export function ProductPage() {
     'description'
   );
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+  // Strip HTML tags for meta description
+  const plainDescription = product?.description
+    ? product.description.replace(/<[^>]*>/g, '').replace(/&[a-z]+;/gi, ' ').replace(/\s+/g, ' ').trim()
+    : '';
+
   useDocumentHead({
     title: product ? `${product.name} | VPPA Fashions` : 'Product | VPPA Fashions',
-    description: product ? `${product.description.slice(0, 155)}` : 'Premium menswear from VPPA Fashions',
+    description: product ? plainDescription.slice(0, 155) : 'Premium menswear from VPPA Fashions',
     canonical: product ? `https://vppafashions.com/product/${product.id}` : undefined,
     ogType: 'product',
     ogImage: product?.images[0],
@@ -242,7 +247,7 @@ export function ProductPage() {
               <SocialShare
                 url={`https://vppafashions.com/product/${product.id}`}
                 title={`${product.name} | VPPA Fashions`}
-                description={product.description}
+                description={plainDescription}
               />
             </div>
 
@@ -260,9 +265,10 @@ export function ProductPage() {
                   
                 </button>
                 {activeAccordion === 'description' &&
-                <div className="pb-5 text-muted-foreground text-sm leading-relaxed">
-                    {product.description}
-                  </div>
+                <div
+                    className="pb-5 text-muted-foreground text-sm leading-relaxed prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: product.description }}
+                  />
                 }
               </div>
 

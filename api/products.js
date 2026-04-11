@@ -29,10 +29,12 @@ export default async function handler(req, res) {
     queries.push(Query.orderDesc('$createdAt'));
 
     if (collection) {
-      // Match collection slug — Appwrite uses velocity_men, presence_men, etc.
-      // Frontend uses velocity, presence, etc.
-      // Match both patterns
-      queries.push(Query.equal('collectionSlug', collection));
+      // Frontend uses: velocity, presence, power, attitude
+      // Appwrite stores: velocity_men, presence_men, power_men, attitude_men
+      // Accept either format and search for both
+      const base = collection.replace(/_men$|_women$/, '');
+      const withSuffix = `${base}_men`;
+      queries.push(Query.equal('collectionSlug', [base, withSuffix]));
     }
 
     if (featured === 'true') {
