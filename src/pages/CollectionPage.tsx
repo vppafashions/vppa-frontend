@@ -14,15 +14,12 @@ export function CollectionPage() {
   const collectionIndex = collections.findIndex((c) => c.slug === slug);
   const collection = collections[collectionIndex];
 
-  // Fetch products from Appwrite — try both slug formats (velocity and velocity_men)
-  const { products: apiProducts, loading } = useProducts({ collection: slug ? `${slug}_men` : undefined });
-  const { products: apiProducts2 } = useProducts({ collection: slug });
+  // Fetch products from Appwrite — API handles slug mapping (velocity → velocity_men)
+  const { products: apiProducts, loading } = useProducts({ collection: slug });
 
-  // Merge and deduplicate
-  const mergedApi = [...apiProducts, ...apiProducts2].filter((p, i, arr) => arr.findIndex((x) => x.id === p.id) === i);
-  const collectionProducts = mergedApi.length > 0
-    ? mergedApi
-    : fallbackProducts.filter((p) => p.collectionSlug === slug);
+  const collectionProducts = apiProducts.length > 0
+    ? apiProducts
+    : loading ? [] : fallbackProducts.filter((p) => p.collectionSlug === slug);
   // Determine next collection for the teaser
   const nextCollectionIndex = (collectionIndex + 1) % collections.length;
   const nextCollection = collections[nextCollectionIndex];
