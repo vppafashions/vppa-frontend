@@ -17,6 +17,13 @@ import { MyOrdersPage } from './pages/MyOrdersPage';
 import { WishlistPage } from './pages/WishlistPage';
 import { MagicLinkCallbackPage } from './pages/MagicLinkCallbackPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { AboutPage } from './pages/AboutPage';
+import { ContactPage } from './pages/ContactPage';
+import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
+import { TermsPage } from './pages/TermsPage';
+import { ShippingReturnsPage } from './pages/ShippingReturnsPage';
+import { FAQPage } from './pages/FAQPage';
+import { NotFoundPage } from './pages/NotFoundPage';
 import { Analytics } from './components/Analytics';
 import { CookieConsent } from './components/seo/CookieConsent';
 export function App() {
@@ -41,6 +48,13 @@ export function App() {
                 <Route path="/wishlist" element={<WishlistPage />} />
                 <Route path="/magic-link-callback" element={<MagicLinkCallbackPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/contact" element={<ContactPage />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                <Route path="/terms" element={<TermsPage />} />
+                <Route path="/shipping-returns" element={<ShippingReturnsPage />} />
+                <Route path="/faq" element={<FAQPage />} />
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </div>
             <Footer />

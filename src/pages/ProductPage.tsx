@@ -10,6 +10,8 @@ import { SizeGuideModal } from '../components/products/SizeGuideModal';
 import { trackViewItem } from '../lib/analytics';
 import { useDocumentHead } from '../hooks/useDocumentHead';
 import { ProductJsonLd } from '../components/seo/ProductJsonLd';
+import { BreadcrumbJsonLd } from '../components/seo/BreadcrumbJsonLd';
+import { SocialShare } from '../components/seo/SocialShare';
 export function ProductPage() {
   const { id } = useParams<{
     id: string;
@@ -215,6 +217,15 @@ export function ProductPage() {
               </Button>
             </div>
 
+            {/* Social Share */}
+            <div className="mb-12">
+              <SocialShare
+                url={`https://vppafashions.com/product/${product.id}`}
+                title={`${product.name} | VPPA Fashions`}
+                description={product.description}
+              />
+            </div>
+
             {/* Accordions */}
             <div className="border-t border-border/50">
               {/* Description */}
@@ -303,6 +314,15 @@ export function ProductPage() {
         />
       )}
       {product && <ProductJsonLd product={product} />}
+      {product && (
+        <BreadcrumbJsonLd
+          items={[
+            { name: 'Home', url: 'https://vppafashions.com/' },
+            { name: product.collectionSlug, url: `https://vppafashions.com/collection/${product.collectionSlug}` },
+            { name: product.name, url: `https://vppafashions.com/product/${product.id}` },
+          ]}
+        />
+      )}
     </main>);
 
 }
