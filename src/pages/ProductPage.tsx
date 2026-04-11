@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { HeartIcon, ChevronDownIcon } from 'lucide-react';
-import { products } from '../data/products';
+import { products as fallbackProducts } from '../data/products';
+import { useProduct } from '../hooks/useProducts';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -19,7 +20,10 @@ export function ProductPage() {
   const { addToCart } = useCart();
   const { user } = useAuth();
   const { isInWishlist, toggleWishlist } = useWishlist();
-  const product = products.find((p) => p.id === id);
+  // Fetch from API, fallback to static data
+  const { product: apiProduct, loading } = useProduct(id);
+  const staticProduct = fallbackProducts.find((p) => p.id === id);
+  const product = apiProduct || staticProduct;
   const wishlisted = product ? isInWishlist(product.id) : false;
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>('');
@@ -54,6 +58,22 @@ export function ProductPage() {
       ? product.colorImages[selectedColor]
       : product.images
     : [];
+  if (loading) {
+    return (
+      <div className="py-16 text-center h-screen">
+        <div className="container mx-auto px-4 md:px-8 py-8">
+          <div className="flex flex-col lg:flex-row gap-12 lg:gap-24">
+            <div className="lg:w-3/5 aspect-square bg-accent/10 animate-pulse rounded" />
+            <div className="lg:w-2/5 space-y-4">
+              <div className="h-4 w-24 bg-accent/10 animate-pulse rounded" />
+              <div className="h-8 w-3/4 bg-accent/10 animate-pulse rounded" />
+              <div className="h-6 w-32 bg-accent/10 animate-pulse rounded" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (!product) {
     return <div className="py-16 text-center h-screen">Product not found</div>;
   }
