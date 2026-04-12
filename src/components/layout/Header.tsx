@@ -17,7 +17,7 @@ export function Header() {
   return (
     <>
       <header
-        className="relative top-0 left-0 right-0 z-40 bg-white border-b border-gray-200">
+        className="sticky top-0 left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-sm">
         
         <div
           className="px-4 md:px-8 text-foreground">
