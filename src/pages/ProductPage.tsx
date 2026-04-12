@@ -294,7 +294,7 @@ export function ProductPage() {
                 {activeAccordion === 'details' &&
                 <div className="pb-5 text-muted-foreground text-sm leading-relaxed">
                     {product.fabricCare ? (
-                      <p className="whitespace-pre-line">{product.fabricCare}</p>
+                      <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: product.fabricCare }} />
                     ) : (
                       <ul className="list-disc pl-4 space-y-2">
                         <li>Premium imported materials</li>
@@ -321,7 +321,7 @@ export function ProductPage() {
                 {activeAccordion === 'shipping' &&
                 <div className="pb-5 text-muted-foreground text-sm leading-relaxed">
                     {product.returnPolicy ? (
-                      <p className="whitespace-pre-line">{product.returnPolicy}</p>
+                      <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: product.returnPolicy }} />
                     ) : (
                       <>
                         <p className="mb-2">
