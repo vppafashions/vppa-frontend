@@ -119,7 +119,7 @@ function transformProduct(doc) {
     category: doc.category || doc.productType || '',
     productType: doc.productType || '',
     sku: doc.sku || '',
-    fabricCare: doc.fabricCare2 || '',
+    fabricCare: doc.fabricCare2 || doc.fabricCare || '',
     returnPolicy: doc.returnPolicy || '',
     colorImages: typeof colorImages === 'object' && !Array.isArray(colorImages) ? colorImages : {},
     sizeGuideId: doc.sizeGuideId || '',
