@@ -10,13 +10,29 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { id, collection, featured, limit: limitParam } = req.query;
+    const { id, slug, collection, featured, limit: limitParam } = req.query;
 
     // Single product by ID
     if (id) {
       try {
         const doc = await getDocument(COLLECTION_IDS.products, id);
         return res.status(200).json({ product: transformProduct(doc) });
+      } catch {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+    }
+
+    // Single product by slug
+    if (slug) {
+      try {
+        const result = await listDocuments(COLLECTION_IDS.products, [
+          Query.equal('slug', slug),
+          Query.limit(1),
+        ]);
+        if (result.documents.length === 0) {
+          return res.status(404).json({ error: 'Product not found' });
+        }
+        return res.status(200).json({ product: transformProduct(result.documents[0]) });
       } catch {
         return res.status(404).json({ error: 'Product not found' });
       }

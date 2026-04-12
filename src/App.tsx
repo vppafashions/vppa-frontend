@@ -40,6 +40,7 @@ export function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/collection/:slug" element={<CollectionPage />} />
                 <Route path="/product/:id" element={<ProductPage />} />
+                <Route path="/:gender/:type/:productSlug" element={<ProductPage />} />
                 <Route path="/checkout" element={<CheckoutPage />} />
                 <Route path="/thank-you" element={<ThankYouPage />} />
                 <Route path="/login" element={<LoginPage />} />
