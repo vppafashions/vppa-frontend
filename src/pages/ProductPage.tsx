@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { HeartIcon, ChevronDownIcon } from 'lucide-react';
 import { products as fallbackProducts } from '../data/products';
-import { useProduct } from '../hooks/useProducts';
+import { useProduct, useProductBySlug, getProductUrl } from '../hooks/useProducts';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -14,15 +14,23 @@ import { ProductJsonLd } from '../components/seo/ProductJsonLd';
 import { BreadcrumbJsonLd } from '../components/seo/BreadcrumbJsonLd';
 import { SocialShare } from '../components/seo/SocialShare';
 export function ProductPage() {
-  const { id } = useParams<{
+  const { id, gender, type, productSlug } = useParams<{
     id: string;
+    gender: string;
+    type: string;
+    productSlug: string;
   }>();
   const { addToCart } = useCart();
   const { user } = useAuth();
   const { isInWishlist, toggleWishlist } = useWishlist();
-  // Fetch from API, fallback to static data
-  const { product: apiProduct, loading } = useProduct(id);
-  const staticProduct = fallbackProducts.find((p) => p.id === id);
+  // Build slug from URL params if using slug-based route
+  const slugFromUrl = productSlug ? `/${gender}/${type}/${productSlug}` : undefined;
+  // Fetch from API by slug or ID
+  const { product: slugProduct, loading: slugLoading } = useProductBySlug(slugFromUrl);
+  const { product: idProduct, loading: idLoading } = useProduct(slugFromUrl ? undefined : id);
+  const apiProduct = slugProduct || idProduct;
+  const loading = slugFromUrl ? slugLoading : idLoading;
+  const staticProduct = id ? fallbackProducts.find((p) => p.id === id) : null;
   const product = apiProduct || staticProduct;
   const wishlisted = product ? isInWishlist(product.id) : false;
   const [selectedSize, setSelectedSize] = useState<string>('');
@@ -41,7 +49,7 @@ export function ProductPage() {
   useDocumentHead({
     title: product ? `${product.name} | VPPA Fashions` : 'Product | VPPA Fashions',
     description: product ? plainDescription.slice(0, 155) : 'Premium menswear from VPPA Fashions',
-    canonical: product ? `https://vppafashions.com/product/${product.id}` : undefined,
+    canonical: product ? `https://vppafashions.com${getProductUrl(product)}` : undefined,
     ogType: 'product',
     ogImage: product?.images[0],
   });
@@ -245,7 +253,7 @@ export function ProductPage() {
             {/* Social Share */}
             <div className="mb-12">
               <SocialShare
-                url={`https://vppafashions.com/product/${product.id}`}
+                url={`https://vppafashions.com${getProductUrl(product)}`}
                 title={`${product.name} | VPPA Fashions`}
                 description={plainDescription}
               />
@@ -345,7 +353,7 @@ export function ProductPage() {
           items={[
             { name: 'Home', url: 'https://vppafashions.com/' },
             { name: product.collectionSlug, url: `https://vppafashions.com/collection/${product.collectionSlug}` },
-            { name: product.name, url: `https://vppafashions.com/product/${product.id}` },
+            { name: product.name, url: `https://vppafashions.com${getProductUrl(product)}` },
           ]}
         />
       )}

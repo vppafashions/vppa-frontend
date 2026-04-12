@@ -1,4 +1,5 @@
 import type { Product } from '../../data/products';
+import { getProductUrl } from '../../hooks/useProducts';
 
 interface ProductJsonLdProps {
   product: Product;
@@ -18,7 +19,7 @@ export function ProductJsonLd({ product }: ProductJsonLdProps) {
     },
     offers: {
       '@type': 'Offer',
-      url: `https://vppafashions.com/product/${product.id}`,
+      url: `https://vppafashions.com${getProductUrl(product)}`,
       priceCurrency: 'INR',
       price: product.price,
       availability: 'https://schema.org/InStock',

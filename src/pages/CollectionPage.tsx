@@ -5,7 +5,7 @@ import { collections } from '../data/collections';
 import { products as fallbackProducts } from '../data/products';
 import { ProductCard } from '../components/products/ProductCard';
 import { useDocumentHead } from '../hooks/useDocumentHead';
-import { useProducts } from '../hooks/useProducts';
+import { useProducts, getProductUrl } from '../hooks/useProducts';
 export function CollectionPage() {
   const { slug } = useParams<{
     slug: string;
@@ -129,7 +129,7 @@ export function CollectionPage() {
         <section className="min-h-screen flex flex-col md:flex-row w-full border-b border-border/30">
             <div className="w-full md:w-[60%] h-[60vh] md:h-screen relative overflow-hidden group">
               <Link
-              to={`/product/${heroProduct.id}`}
+              to={getProductUrl(heroProduct)}
               className="block w-full h-full">
               
                 {heroProduct.images[0] ? (
@@ -162,7 +162,7 @@ export function CollectionPage() {
                 dangerouslySetInnerHTML={{ __html: heroProduct.description }}
               />
               <Link
-              to={`/product/${heroProduct.id}`}
+              to={getProductUrl(heroProduct)}
               className="inline-flex items-center gap-4 text-sm tracking-[0.2em] uppercase group/link w-fit">
               
                 <span className="border-b border-foreground pb-1 group-hover/link:border-primary transition-colors">

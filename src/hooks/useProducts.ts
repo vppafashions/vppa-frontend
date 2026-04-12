@@ -159,3 +159,87 @@ export function useProduct(id: string | undefined) {
 
   return { product, loading, error };
 }
+
+// Single product by slug
+const slugCache: Record<string, { data: Product; timestamp: number }> = {};
+
+export function useProductBySlug(slug: string | undefined) {
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!slug) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function fetchProduct() {
+      // Check slug cache
+      const cached = slugCache[slug!];
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        setProduct(cached.data);
+        setLoading(false);
+        return;
+      }
+
+      // Check if it's in any collection cache by slug
+      for (const key of Object.keys(cache)) {
+        const entry = cache[key];
+        if (entry && Date.now() - entry.timestamp < CACHE_TTL) {
+          const found = entry.data.find((p) => p.slug === slug);
+          if (found) {
+            setProduct(found);
+            slugCache[slug!] = { data: found, timestamp: Date.now() };
+            setLoading(false);
+            return;
+          }
+        }
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const res = await fetch(`${API_BASE}?slug=${encodeURIComponent(slug)}`);
+        if (!res.ok) {
+          throw new Error(`Product not found: ${res.status}`);
+        }
+        const data = await res.json();
+        const fetchedProduct: Product = data.product;
+
+        if (!cancelled) {
+          setProduct(fetchedProduct);
+          slugCache[slug!] = { data: fetchedProduct, timestamp: Date.now() };
+          setLoading(false);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to fetch product');
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchProduct();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
+
+  return { product, loading, error };
+}
+
+// Helper to get the product URL path from a product's slug
+export function getProductUrl(product: { slug?: string; id: string }): string {
+  if (product.slug) {
+    // Slugs may start with / (e.g. /men/shirt/product-name) or not (e.g. product-name)
+    const slug = product.slug.startsWith('/') ? product.slug : `/${product.slug}`;
+    return slug;
+  }
+  // Fallback to old ID-based URL
+  return `/product/${product.id}`;
+}

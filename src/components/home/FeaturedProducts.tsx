@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useProducts } from '../../hooks/useProducts';
+import { useProducts, getProductUrl } from '../../hooks/useProducts';
 import { products as fallbackProducts } from '../../data/products';
 
 export function FeaturedProducts() {
@@ -47,7 +47,7 @@ export function FeaturedProducts() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
             {/* Large Hero Product */}
             <div className="md:col-span-2 group">
-              <Link to={`/product/${heroProduct.id}`} className="block h-full">
+              <Link to={getProductUrl(heroProduct)} className="block h-full">
                 <div className="relative aspect-square overflow-hidden mb-6 bg-accent/10">
                   {heroProduct.images[0] ? (
                     <img
@@ -79,7 +79,7 @@ export function FeaturedProducts() {
             <div className="flex flex-col gap-12">
               {sideProducts.map((product) =>
               <div key={product.id} className="group">
-                  <Link to={`/product/${product.id}`} className="block">
+                  <Link to={getProductUrl(product)} className="block">
                     <div className="relative aspect-square overflow-hidden mb-4 bg-accent/10">
                       {product.images[0] ? (
                         <img
