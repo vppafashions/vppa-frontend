@@ -1,10 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useProducts, getProductUrl } from '../../hooks/useProducts';
+import { useGender } from '../../context/GenderContext';
 import { products as fallbackProducts } from '../../data/products';
 
 export function FeaturedProducts() {
-  const { products: apiProducts, loading } = useProducts({});
+  const { gender } = useGender();
+  const { products: apiProducts, loading } = useProducts({ gender });
 
   // Use API products if available, fall back to static data
   const allProducts = apiProducts.length > 0 ? apiProducts : fallbackProducts;

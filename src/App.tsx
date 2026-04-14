@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { WishlistProvider } from './context/WishlistContext';
+import { GenderProvider } from './context/GenderContext';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { CartDrawer } from './components/cart/CartDrawer';
@@ -28,6 +29,7 @@ import { Analytics } from './components/Analytics';
 import { CookieConsent } from './components/seo/CookieConsent';
 export function App() {
   return <AuthProvider>
+      <GenderProvider>
       <WishlistProvider>
       <CartProvider>
         <Router>
@@ -64,5 +66,6 @@ export function App() {
         </Router>
       </CartProvider>
       </WishlistProvider>
+      </GenderProvider>
     </AuthProvider>;
 }

@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { id, slug, collection, featured, limit: limitParam } = req.query;
+    const { id, slug, collection, featured, limit: limitParam, gender } = req.query;
 
     // Single product by ID
     if (id) {
@@ -46,11 +46,17 @@ export default async function handler(req, res) {
 
     if (collection) {
       // Frontend uses: velocity, presence, power, attitude
-      // Appwrite stores: velocity_men, presence_men, power_men, attitude_men
-      // Accept either format and search for both
+      // Appwrite stores: velocity_men, presence_men, power_men, attitude_men, velocity_women, etc.
       const base = collection.replace(/_men$|_women$/, '');
-      const withSuffix = `${base}_men`;
+      const suffix = gender === 'women' ? '_women' : '_men';
+      const withSuffix = `${base}${suffix}`;
       queries.push(Query.equal('collectionSlug', [base, withSuffix]));
+    }
+
+    // When no collection but gender is specified, filter all products by gender suffix
+    if (!collection && gender) {
+      const suffix = gender === 'women' ? '_women' : '_men';
+      queries.push(Query.contains('collectionSlug', suffix));
     }
 
     if (featured === 'true') {

@@ -5,10 +5,18 @@ import { FeaturedProducts } from '../components/home/FeaturedProducts';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useDocumentHead } from '../hooks/useDocumentHead';
+import { useGender } from '../context/GenderContext';
 export function HomePage() {
+  const { gender } = useGender();
+  const isWomen = gender === 'women';
+
   useDocumentHead({
-    title: 'VPPA Fashions — Premium Men\'s Clothing | Velocity, Presence, Power, Attitude',
-    description: 'VPPA Fashions — India\'s premium men\'s clothing brand. Shop luxury sweatshirts, linen shirts, hoodies, cargo pants & full-sleeve shirts.',
+    title: isWomen
+      ? 'VPPA Fashions — Premium Women\'s Clothing | Kurthi, Sarees & More'
+      : 'VPPA Fashions — Premium Men\'s Clothing | Velocity, Presence, Power, Attitude',
+    description: isWomen
+      ? 'VPPA Fashions — India\'s premium women\'s clothing brand. Shop elegant kurthis, sarees & designer ethnic wear.'
+      : 'VPPA Fashions — India\'s premium men\'s clothing brand. Shop luxury sweatshirts, linen shirts, hoodies, cargo pants & full-sleeve shirts.',
     canonical: 'https://vppafashions.com/',
   });
 
@@ -20,8 +28,10 @@ export function HomePage() {
       <section className="py-32 md:py-48 px-4 border-b border-border/30">
         <div className="container mx-auto max-w-5xl text-center">
           <h2 className="font-magazine italic text-4xl md:text-6xl lg:text-7xl leading-tight md:leading-tight lg:leading-tight font-light text-foreground mb-12">
-            "We don't follow trends. We set the standard. Every stitch, every
-            fabric, every silhouette — crafted for men who lead, not follow."
+            {isWomen
+              ? '"Grace meets boldness. Every drape, every detail, every hue — crafted for women who define their own elegance."'
+              : '"We don\'t follow trends. We set the standard. Every stitch, every fabric, every silhouette — crafted for men who lead, not follow."'
+            }
           </h2>
           <div className="flex items-center justify-center gap-4">
             <div className="w-8 h-px bg-primary"></div>
@@ -54,12 +64,20 @@ export function HomePage() {
         <div className="container mx-auto max-w-5xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
             <div>
-              <h2 className="font-magazine italic text-4xl md:text-5xl mb-8 font-light">Premium Men's Fashion, Crafted in India</h2>
+              <h2 className="font-magazine italic text-4xl md:text-5xl mb-8 font-light">
+                {isWomen ? 'Premium Women\'s Fashion, Crafted in India' : 'Premium Men\'s Fashion, Crafted in India'}
+              </h2>
               <p className="text-muted-foreground leading-relaxed mb-6">
-                VPPA Fashions is India's fastest-growing premium menswear brand, offering luxury sweatshirts, linen shirts, hoodies, cargo pants, and designer full-sleeve shirts. Every piece is meticulously crafted using premium imported fabrics, ensuring unmatched comfort, durability, and style.
+                {isWomen
+                  ? 'VPPA Fashions brings India\'s finest women\'s ethnic and contemporary wear — elegant kurthis, luxurious sarees, and designer squad sets. Every piece is meticulously crafted using premium fabrics, ensuring unmatched comfort, beauty, and style.'
+                  : 'VPPA Fashions is India\'s fastest-growing premium menswear brand, offering luxury sweatshirts, linen shirts, hoodies, cargo pants, and designer full-sleeve shirts. Every piece is meticulously crafted using premium imported fabrics, ensuring unmatched comfort, durability, and style.'
+                }
               </p>
               <p className="text-muted-foreground leading-relaxed mb-6">
-                Our collections are designed for the modern Indian man who values quality over quantity. From boardroom meetings to weekend getaways, VPPA clothing transitions effortlessly across occasions while maintaining a distinctive edge that sets you apart.
+                {isWomen
+                  ? 'Our collections are designed for the modern Indian woman who celebrates tradition with a contemporary edge. From festive celebrations to everyday elegance, VPPA clothing transitions effortlessly across occasions.'
+                  : 'Our collections are designed for the modern Indian man who values quality over quantity. From boardroom meetings to weekend getaways, VPPA clothing transitions effortlessly across occasions while maintaining a distinctive edge that sets you apart.'
+                }
               </p>
               <p className="text-muted-foreground leading-relaxed">
                 Based in Bengaluru, Karnataka, we combine global fashion trends with Indian craftsmanship. Each garment undergoes rigorous quality checks, from fabric selection to final stitching, ensuring that every VPPA product meets our exacting standards.
