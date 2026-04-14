@@ -7,6 +7,36 @@ export interface Collection {
   tagline: string;
 }
 
+// Gender-specific overrides for collections
+interface GenderCollectionOverrides {
+  description: string;
+  image: string;
+  tagline: string;
+}
+
+export const womenOverrides: Record<string, GenderCollectionOverrides> = {
+  velocity: {
+    description: 'Effortless elegance in motion. Designer squad set kurthis crafted for the woman who moves with purpose and grace.',
+    image: 'https://res.cloudinary.com/dp6k1cln0/image/upload/v1776059835/vppa/eyonchfelwbs99v3wc89.png',
+    tagline: 'Grace in Motion',
+  },
+  presence: {
+    description: 'Timeless drapes that command admiration. Luxurious sarees woven with heritage and modern sophistication.',
+    image: 'https://res.cloudinary.com/dp6k1cln0/image/upload/v1776061937/vppa/reu7slhw9ixbx7lo4a77.jpg',
+    tagline: 'Timeless Elegance',
+  },
+  power: {
+    description: 'Bold ethnic wear that celebrates strength. Single piece kurthis with striking silhouettes for the confident woman.',
+    image: 'https://res.cloudinary.com/dp6k1cln0/image/upload/v1776061408/vppa/ady44xvbijexeknvsqz4.png',
+    tagline: 'Bold Femininity',
+  },
+  attitude: {
+    description: 'Unapologetic style. Designer kurthis with bold patterns and premium fabrics for the fearless woman.',
+    image: 'https://res.cloudinary.com/dp6k1cln0/image/upload/v1776060398/vppa/qmhrot0h1kpbacwmzwrz.png',
+    tagline: 'Fearless Expression',
+  },
+};
+
 export const collections: Collection[] = [
 {
   id: 'c1',
@@ -48,3 +78,11 @@ export const collections: Collection[] = [
   'https://images.unsplash.com/photo-1603252109303-2751441dd157?auto=format&fit=crop&q=80&w=1000',
   tagline: 'Fearless Expression'
 }];
+
+/** Returns a collection with gender-appropriate overrides applied */
+export function getGenderedCollection(collection: Collection, gender: 'men' | 'women'): Collection {
+  if (gender === 'women' && womenOverrides[collection.slug]) {
+    return { ...collection, ...womenOverrides[collection.slug] };
+  }
+  return collection;
+}

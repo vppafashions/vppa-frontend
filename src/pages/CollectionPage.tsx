@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowDownIcon, ArrowRightIcon } from 'lucide-react';
-import { collections } from '../data/collections';
+import { collections, getGenderedCollection } from '../data/collections';
 import { products as fallbackProducts } from '../data/products';
 import { ProductCard } from '../components/products/ProductCard';
 import { useDocumentHead } from '../hooks/useDocumentHead';
@@ -14,7 +14,7 @@ export function CollectionPage() {
   const contentRef = useRef<HTMLDivElement>(null);
   const { gender } = useGender();
   const collectionIndex = collections.findIndex((c) => c.slug === slug);
-  const collection = collections[collectionIndex];
+  const collection = collectionIndex >= 0 ? getGenderedCollection(collections[collectionIndex], gender) : undefined;
 
   // Fetch products from Appwrite — API handles slug mapping based on gender
   const { products: apiProducts, loading } = useProducts({ collection: slug, gender });
@@ -24,7 +24,7 @@ export function CollectionPage() {
     : loading ? [] : fallbackProducts.filter((p) => p.collectionSlug === slug);
   // Determine next collection for the teaser
   const nextCollectionIndex = (collectionIndex + 1) % collections.length;
-  const nextCollection = collections[nextCollectionIndex];
+  const nextCollection = getGenderedCollection(collections[nextCollectionIndex], gender);
   useDocumentHead({
     title: collection ? `${collection.name} Collection | VPPA Fashions` : 'Collection | VPPA Fashions',
     description: collection?.description,
@@ -47,6 +47,20 @@ export function CollectionPage() {
   }
   // Get collection-specific quote
   const getCollectionQuote = () => {
+    if (gender === 'women') {
+      switch (slug) {
+        case 'velocity':
+          return 'Crafted for women who move with purpose. Every drape designed for effortless grace in motion.';
+        case 'presence':
+          return 'Timeless elegance woven into every thread. Sarees that speak of heritage and quiet sophistication.';
+        case 'power':
+          return 'Where boldness meets beauty. Ethnic wear that celebrates the strength within every woman.';
+        case 'attitude':
+          return 'Style is not about fitting in. It is about celebrating your unique expression with fearless confidence.';
+        default:
+          return 'Redefining modern elegance through uncompromising quality and fearless expression.';
+      }
+    }
     switch (slug) {
       case 'velocity':
         return 'Built for those who never stand still. Every thread engineered for the relentless pursuit of momentum.';

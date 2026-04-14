@@ -1,9 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRightIcon } from 'lucide-react';
-import { collections } from '../../data/collections';
+import { collections, getGenderedCollection } from '../../data/collections';
+import { useGender } from '../../context/GenderContext';
 export function CollectionShowcase() {
-  const [velocity, presence, power, attitude] = collections;
+  const { gender } = useGender();
+  const [velocity, presence, power, attitude] = collections.map((c) => getGenderedCollection(c, gender));
   return (
     <div className="w-full bg-background">
       {/* VELOCITY - Chapter 01 (Image Left, Text Right) */}

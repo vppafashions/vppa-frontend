@@ -1,12 +1,18 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowDownIcon } from 'lucide-react';
+import { useGender } from '../../context/GenderContext';
 export function HeroBanner() {
+  const { gender } = useGender();
+  const isWomen = gender === 'women';
   return (
     <div className="relative h-screen w-full overflow-hidden bg-black">
       <div className="absolute inset-0">
         <img
-          src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=2000"
+          src={isWomen
+            ? 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&q=80&w=2000'
+            : 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=2000'
+          }
           alt="VPPA Luxury Fashion"
           className="w-full h-full object-cover object-center opacity-80" />
         
@@ -33,7 +39,7 @@ export function HeroBanner() {
             VPPA
           </h1>
           <p className="text-xs md:text-sm tracking-[0.4em] uppercase font-light max-w-2xl mx-auto text-white/80">
-            The Definitive Guide to Modern Masculinity
+            {isWomen ? 'The Definitive Guide to Modern Elegance' : 'The Definitive Guide to Modern Masculinity'}
           </p>
         </div>
 
