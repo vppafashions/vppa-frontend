@@ -23,6 +23,7 @@ interface UseProductsOptions {
   collection?: string;
   featured?: boolean;
   limit?: number;
+  gender?: string;
 }
 
 export function useProducts(options: UseProductsOptions = {}) {
@@ -30,8 +31,8 @@ export function useProducts(options: UseProductsOptions = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const { collection, featured, limit } = options;
-  const cacheKey = `products:${collection || 'all'}:${featured || ''}:${limit || ''}`;
+  const { collection, featured, limit, gender } = options;
+  const cacheKey = `products:${collection || 'all'}:${featured || ''}:${limit || ''}:${gender || ''}`;
 
   useEffect(() => {
     let cancelled = false;
@@ -53,6 +54,7 @@ export function useProducts(options: UseProductsOptions = {}) {
         if (collection) params.set('collection', collection);
         if (featured) params.set('featured', 'true');
         if (limit) params.set('limit', String(limit));
+        if (gender) params.set('gender', gender);
 
         const url = `${API_BASE}${params.toString() ? `?${params}` : ''}`;
         const res = await fetch(url);
@@ -82,7 +84,7 @@ export function useProducts(options: UseProductsOptions = {}) {
     return () => {
       cancelled = true;
     };
-  }, [cacheKey, collection, featured, limit]);
+  }, [cacheKey, collection, featured, limit, gender]);
 
   return { products, loading, error };
 }

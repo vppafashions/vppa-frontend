@@ -6,16 +6,18 @@ import { products as fallbackProducts } from '../data/products';
 import { ProductCard } from '../components/products/ProductCard';
 import { useDocumentHead } from '../hooks/useDocumentHead';
 import { useProducts, getProductUrl } from '../hooks/useProducts';
+import { useGender } from '../context/GenderContext';
 export function CollectionPage() {
   const { slug } = useParams<{
     slug: string;
   }>();
   const contentRef = useRef<HTMLDivElement>(null);
+  const { gender } = useGender();
   const collectionIndex = collections.findIndex((c) => c.slug === slug);
   const collection = collections[collectionIndex];
 
-  // Fetch products from Appwrite — API handles slug mapping (velocity → velocity_men)
-  const { products: apiProducts, loading } = useProducts({ collection: slug });
+  // Fetch products from Appwrite — API handles slug mapping based on gender
+  const { products: apiProducts, loading } = useProducts({ collection: slug, gender });
 
   const collectionProducts = apiProducts.length > 0
     ? apiProducts

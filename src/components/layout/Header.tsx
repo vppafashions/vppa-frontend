@@ -4,12 +4,14 @@ import { SearchIcon, ShoppingBagIcon, MenuIcon, XIcon, UserIcon, HeartIcon } fro
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useWishlist } from '../../context/WishlistContext';
+import { useGender } from '../../context/GenderContext';
 import { collections } from '../../data/collections';
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { getCartCount, setIsCartOpen } = useCart();
   const { user, loading: authLoading } = useAuth();
   const { wishlistCount } = useWishlist();
+  const { gender, setGender } = useGender();
   const location = useLocation();
   React.useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -41,6 +43,20 @@ export function Header() {
 
               {/* Desktop Navigation */}
               <nav className="hidden md:flex items-center gap-6 flex-1">
+                <div className="flex items-center border border-border rounded-sm text-[10px] tracking-[0.2em] uppercase font-medium mr-2">
+                  <button
+                    className={`px-3 py-1.5 transition-colors ${gender === 'men' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'}`}
+                    onClick={() => setGender('men')}
+                  >
+                    Men
+                  </button>
+                  <button
+                    className={`px-3 py-1.5 transition-colors ${gender === 'women' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'}`}
+                    onClick={() => setGender('women')}
+                  >
+                    Women
+                  </button>
+                </div>
                 {collections.map((collection) =>
                 <Link
                   key={collection.id}
@@ -132,6 +148,20 @@ export function Header() {
             </button>
           </div>
           <nav className="flex flex-col p-8 gap-8 text-xl uppercase tracking-widest">
+            <div className="flex items-center gap-4 border-b border-border/20 pb-8">
+              <button
+                className={`flex-1 py-3 text-center text-sm tracking-[0.3em] border ${gender === 'men' ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground'}`}
+                onClick={() => setGender('men')}
+              >
+                MEN
+              </button>
+              <button
+                className={`flex-1 py-3 text-center text-sm tracking-[0.3em] border ${gender === 'women' ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground'}`}
+                onClick={() => setGender('women')}
+              >
+                WOMEN
+              </button>
+            </div>
             {collections.map((collection) =>
           <Link
             key={collection.id}
