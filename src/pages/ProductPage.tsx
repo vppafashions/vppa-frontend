@@ -48,7 +48,7 @@ export function ProductPage() {
 
   useDocumentHead({
     title: product ? `${product.name} | VPPA Fashions` : 'Product | VPPA Fashions',
-    description: product ? plainDescription.slice(0, 155) : 'Premium menswear from VPPA Fashions',
+    description: product ? plainDescription.slice(0, 155) : 'Premium fashion from VPPA Fashions',
     canonical: product ? `https://vppafashions.com${getProductUrl(product)}` : undefined,
     ogType: 'product',
     ogImage: product?.images[0],
