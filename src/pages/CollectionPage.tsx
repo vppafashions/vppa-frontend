@@ -25,8 +25,9 @@ export function CollectionPage() {
   // Determine next collection for the teaser
   const nextCollectionIndex = (collectionIndex + 1) % collections.length;
   const nextCollection = getGenderedCollection(collections[nextCollectionIndex], gender);
+  const genderLabel = gender === 'women' ? "Women's" : "Men's";
   useDocumentHead({
-    title: collection ? `${collection.name} Collection | VPPA Fashions` : 'Collection | VPPA Fashions',
+    title: collection ? `${collection.name} ${genderLabel} Collection | VPPA Fashions` : 'Collection | VPPA Fashions',
     description: collection?.description,
     canonical: collection ? `https://vppafashions.com/collection/${collection.slug}` : undefined,
     ogImage: collection?.image,
