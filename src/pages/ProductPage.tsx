@@ -171,24 +171,59 @@ export function ProductPage() {
             {/* Color Selection */}
             <div className="mb-8">
               <div className="flex justify-between mb-3">
-                <span className="text-sm uppercase tracking-widest">Color</span>
+                <span className="text-sm uppercase tracking-widest">
+                  Color{selectedColor ? ` — ${selectedColor}` : ''}
+                </span>
               </div>
-              <div className="flex gap-3">
-                {product.colors.map((color) =>
-                <button
-                  key={color}
-                  onClick={() => {
-                    setSelectedColor(color);
-                    setActiveImage(0);
-                  }}
-                  className={`w-8 h-8 rounded-full border-2 ${selectedColor === color ? 'border-primary ring-2 ring-primary/20 ring-offset-2 ring-offset-background' : 'border-border'}`}
-                  style={{
-                    backgroundColor: color
-                  }}
-                  aria-label={`Select color ${color}`} />
-
-                )}
-              </div>
+              {product.colorImages && Object.keys(product.colorImages).some(c => product.colorImages![c]?.length > 0) ? (
+                <div className="flex gap-3">
+                  {product.colors.map((color) => {
+                    const thumb = product.colorImages?.[color]?.[0];
+                    return thumb ? (
+                      <button
+                        key={color}
+                        onClick={() => {
+                          setSelectedColor(color);
+                          setActiveImage(0);
+                        }}
+                        className={`w-16 h-16 rounded-md border-2 overflow-hidden transition-all ${selectedColor === color ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-foreground/50'}`}
+                        aria-label={`Select color ${color}`}
+                      >
+                        <img
+                          src={thumb}
+                          alt={color}
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ) : (
+                      <button
+                        key={color}
+                        onClick={() => {
+                          setSelectedColor(color);
+                          setActiveImage(0);
+                        }}
+                        className={`w-8 h-8 rounded-full border-2 ${selectedColor === color ? 'border-primary ring-2 ring-primary/20 ring-offset-2 ring-offset-background' : 'border-border'}`}
+                        style={{ backgroundColor: color }}
+                        aria-label={`Select color ${color}`}
+                      />
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex gap-3">
+                  {product.colors.map((color) =>
+                  <button
+                    key={color}
+                    onClick={() => {
+                      setSelectedColor(color);
+                      setActiveImage(0);
+                    }}
+                    className={`w-8 h-8 rounded-full border-2 ${selectedColor === color ? 'border-primary ring-2 ring-primary/20 ring-offset-2 ring-offset-background' : 'border-border'}`}
+                    style={{ backgroundColor: color }}
+                    aria-label={`Select color ${color}`} />
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Size Selection */}
