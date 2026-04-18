@@ -72,7 +72,7 @@ export function Header() {
               <Link
                 to="/"
                 className="text-center flex-1 md:flex-none">
-                <img src="/vppalogo.svg" alt="VPPA" className="h-10 w-auto mx-auto invert" />
+                <img src="/vppalogo.svg" alt="VPPA" className="h-20 w-auto mx-auto brightness-0" />
               </Link>
 
               {/* Right Icons */}
@@ -137,7 +137,7 @@ export function Header() {
       {isMobileMenuOpen &&
       <div className="fixed inset-0 bg-background z-50 flex flex-col text-foreground">
           <div className="flex items-center justify-between p-6 border-b border-border/20">
-            <img src="/vppalogo.svg" alt="VPPA" className="h-8 w-auto invert" />
+            <img src="/vppalogo.svg" alt="VPPA" className="h-16 w-auto brightness-0" />
             <button
             onClick={() => setIsMobileMenuOpen(false)}
             className="p-2"
