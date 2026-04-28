@@ -12,6 +12,7 @@ const COLLECTION_IDS = {
   customers: 'customers',
   wishlists: 'wishlists',
   products: 'products',
+  productExtras: 'productExtras',
   addresses: 'addresses',
   sizeGuides: 'size-guides',
   returns: 'returns',
