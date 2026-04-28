@@ -16,7 +16,8 @@ export default async function handler(req, res) {
     if (id) {
       try {
         const doc = await getDocument(COLLECTION_IDS.products, id);
-        return res.status(200).json({ product: transformProduct(doc) });
+        const extras = await fetchExtras(id);
+        return res.status(200).json({ product: transformProduct(doc, extras) });
       } catch {
         return res.status(404).json({ error: 'Product not found' });
       }
@@ -32,7 +33,9 @@ export default async function handler(req, res) {
         if (result.documents.length === 0) {
           return res.status(404).json({ error: 'Product not found' });
         }
-        return res.status(200).json({ product: transformProduct(result.documents[0]) });
+        const doc = result.documents[0];
+        const extras = await fetchExtras(doc.$id);
+        return res.status(200).json({ product: transformProduct(doc, extras) });
       } catch {
         return res.status(404).json({ error: 'Product not found' });
       }
@@ -65,9 +68,12 @@ export default async function handler(req, res) {
 
     const result = await listDocuments(COLLECTION_IDS.products, queries);
 
+    // Batch-fetch extras for all products
+    const extrasMap = await fetchExtrasForMany(result.documents.map((d) => d.$id));
+
     const products = result.documents
       .filter((doc) => doc.displayOnCollectionPage !== false)
-      .map(transformProduct);
+      .map((doc) => transformProduct(doc, extrasMap[doc.$id]));
 
     // Set cache headers — revalidate every 5 minutes
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
@@ -78,7 +84,32 @@ export default async function handler(req, res) {
   }
 }
 
-function transformProduct(doc) {
+// Fetch extras for a single product (returns {} on failure)
+async function fetchExtras(productId) {
+  try {
+    return await getDocument(COLLECTION_IDS.productExtras, productId);
+  } catch {
+    return {};
+  }
+}
+
+// Batch-fetch extras for multiple products
+async function fetchExtrasForMany(productIds) {
+  const map = {};
+  const results = await Promise.allSettled(
+    productIds.map((id) =>
+      getDocument(COLLECTION_IDS.productExtras, id).then((doc) => ({ id, doc }))
+    )
+  );
+  for (const r of results) {
+    if (r.status === 'fulfilled') {
+      map[r.value.id] = r.value.doc;
+    }
+  }
+  return map;
+}
+
+function transformProduct(doc, extras = {}) {
   // Parse JSON string fields
   let images = [];
   try {
@@ -87,9 +118,10 @@ function transformProduct(doc) {
     images = [];
   }
 
+  // colorImages comes from productExtras collection
   let colorImages = {};
   try {
-    colorImages = doc.colorImages ? JSON.parse(doc.colorImages) : {};
+    colorImages = extras.colorImages ? JSON.parse(extras.colorImages) : {};
   } catch {
     colorImages = {};
   }
@@ -112,6 +144,10 @@ function transformProduct(doc) {
     ? doc.collectionSlug.replace(/_men$|_women$/, '')
     : '';
 
+  // fabricCare & returnPolicy come from productExtras (with fallback to products collection)
+  const fabricCare = extras.fabricCare || doc.fabricCare2 || '';
+  const returnPolicy = extras.returnPolicy || doc.returnPolicy || '';
+
   return {
     id: doc.$id,
     name: doc.name || '',
@@ -125,8 +161,8 @@ function transformProduct(doc) {
     category: doc.category || doc.productType || '',
     productType: doc.productType || '',
     sku: doc.sku || '',
-    fabricCare: doc.fabricCare2 || doc.fabricCare || '',
-    returnPolicy: doc.returnPolicy || '',
+    fabricCare,
+    returnPolicy,
     colorImages: typeof colorImages === 'object' && !Array.isArray(colorImages) ? colorImages : {},
     sizeGuideId: doc.sizeGuideId || '',
     slug: doc.slug || '',
