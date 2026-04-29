@@ -248,8 +248,12 @@ export function CheckoutPage() {
         setIsSubmitting(false);
         return;
       }
-    } catch {
-      // If stock check fails, don't block checkout
+    } catch (err) {
+      // If stock check fails, block checkout and show error
+      setStockErrors([{ name: 'Stock check', requested: 0, available: 0 }]);
+      setPaymentError('Unable to verify stock availability. Please try again.');
+      setIsSubmitting(false);
+      return;
     }
 
     // Save customer details and new address to Appwrite if logged in
@@ -308,6 +312,13 @@ export function CheckoutPage() {
         notes: {
           shippingAddress: `${form.shippingAddress}, ${form.shippingCity}, ${form.shippingState} ${form.shippingPincode}`,
         },
+        items: items.map((item) => ({
+          productId: item.productId,
+          name: item.name,
+          quantity: item.quantity,
+          size: item.size,
+          color: item.color,
+        })),
       });
 
       // Build full address string
