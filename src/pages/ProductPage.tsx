@@ -41,6 +41,7 @@ export function ProductPage() {
     'description'
   );
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+  const [stockInfo, setStockInfo] = useState<{ inStock: boolean; stockQuantity: number } | null>(null);
   // Strip HTML tags for meta description
   const plainDescription = product?.description
     ? product.description.replace(/<[^>]*>/g, '').replace(/&[a-z]+;/gi, ' ').replace(/\s+/g, ' ').trim()
@@ -62,8 +63,31 @@ export function ProductPage() {
       setActiveImage(0);
       setQuantity(1);
       trackViewItem({ id: product.id, name: product.name, price: product.price });
+      // Use product-level stock info from API response
+      setStockInfo({
+        inStock: product.inStock !== false && (product.stockQuantity ?? 1) > 0,
+        stockQuantity: product.stockQuantity ?? 0,
+      });
     }
   }, [product]);
+
+  // Re-check stock when size/color changes (variant-level stock)
+  useEffect(() => {
+    if (!product || !selectedSize || !selectedColor) return;
+    // If product has variant inventory, check variant-specific stock
+    if (product.variantInventory && product.variantInventory.length > 0) {
+      const match = product.variantInventory.find(
+        (v) => v.size.toLowerCase() === selectedSize.toLowerCase() && v.color.toLowerCase() === selectedColor.toLowerCase()
+      );
+      if (match) {
+        setStockInfo({ inStock: match.stock > 0, stockQuantity: match.stock });
+      } else {
+        setStockInfo({ inStock: false, stockQuantity: 0 });
+      }
+    }
+  }, [product, selectedSize, selectedColor]);
+
+  const isOutOfStock = stockInfo !== null && !stockInfo.inStock;
 
   // Get images for the currently selected color
   const currentImages = product
@@ -91,6 +115,7 @@ export function ProductPage() {
     return <div className="py-16 text-center h-screen">Product not found</div>;
   }
   const handleAddToCart = () => {
+    if (isOutOfStock) return;
     if (!selectedSize) {
       alert('Please select a size');
       return;
@@ -256,10 +281,10 @@ export function ProductPage() {
             <div className="flex gap-4 mb-12">
               <Button
                 onClick={handleAddToCart}
-                className="flex-1 h-14 text-sm"
-                variant="primary">
-                
-                Add to Bag
+                className={`flex-1 h-14 text-sm ${isOutOfStock ? 'opacity-60 cursor-not-allowed' : ''}`}
+                variant="primary"
+                disabled={isOutOfStock}>
+                {isOutOfStock ? 'Out of Stock' : 'Add to Bag'}
               </Button>
               <Button
                 variant="outline"

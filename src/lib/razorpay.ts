@@ -4,6 +4,14 @@
 // 2. Frontend opens checkout with order_id
 // 3. Server verifies payment signature (POST /api/payments?action=verify-payment)
 
+interface CartItem {
+  productId: string;
+  name: string;
+  quantity: number;
+  size?: string;
+  color?: string;
+}
+
 interface PaymentOptions {
   amount: number; // in rupees (will be converted to paise)
   receipt?: string;
@@ -13,6 +21,7 @@ interface PaymentOptions {
     contact?: string;
   };
   notes?: Record<string, string>;
+  items?: CartItem[];
 }
 
 export interface RazorpayPaymentResult {
@@ -51,7 +60,7 @@ if (typeof window !== 'undefined') {
 }
 
 // Step 1: Create order on server (server calls Razorpay Orders API with key_secret)
-async function createRazorpayOrder(amountInPaise: number, receipt?: string, notes?: Record<string, string>) {
+async function createRazorpayOrder(amountInPaise: number, receipt?: string, notes?: Record<string, string>, items?: CartItem[]) {
   const response = await fetch('/api/payments?action=create-order', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -60,6 +69,7 @@ async function createRazorpayOrder(amountInPaise: number, receipt?: string, note
       currency: 'INR',
       receipt: receipt || `rcpt_${Date.now()}`,
       notes: notes || {},
+      items: items || [],
     }),
   });
 
@@ -115,7 +125,8 @@ export async function initiateRazorpayPayment(
   const order = await createRazorpayOrder(
     amountInPaise,
     options.receipt,
-    options.notes
+    options.notes,
+    options.items
   );
 
   // Step 2: Open Razorpay Checkout with order_id (mandatory per docs)

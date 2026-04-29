@@ -3,6 +3,16 @@
 // Usage: POST /api/payments?action=create-order | POST /api/payments?action=verify-payment
 
 import crypto from 'crypto';
+import { listDocuments, COLLECTION_IDS, Query } from './_appwrite.js';
+
+function parseVariantInventory(raw) {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+  } catch { /* ignore */ }
+  return [];
+}
 
 export default async function handler(req, res) {
   // CORS headers
@@ -33,10 +43,61 @@ async function handleCreateOrder(req, res) {
   }
 
   try {
-    const { amount, currency, receipt, notes } = req.body;
+    const { amount, currency, receipt, notes, items } = req.body;
 
     if (!amount || amount <= 0) {
       return res.status(400).json({ error: 'Invalid amount' });
+    }
+
+    // Server-side stock validation before creating Razorpay order
+    if (items && Array.isArray(items) && items.length > 0) {
+      const outOfStockItems = [];
+      for (const item of items) {
+        if (!item.productId) continue;
+        try {
+          const data = await listDocuments(COLLECTION_IDS.products, [
+            Query.equal('$id', item.productId),
+            Query.limit(1),
+          ]);
+          if (data.documents.length > 0) {
+            const product = data.documents[0];
+            const variantInv = parseVariantInventory(product.variantInventory);
+
+            if (item.size && item.color && variantInv.length > 0) {
+              const match = variantInv.find(
+                (v) => v.size.toLowerCase() === item.size.toLowerCase() &&
+                       v.color.toLowerCase() === item.color.toLowerCase()
+              );
+              const variantStock = match ? match.stock : 0;
+              if (variantStock < (item.quantity || 1)) {
+                outOfStockItems.push({
+                  name: item.name || item.productId,
+                  requested: item.quantity || 1,
+                  available: variantStock,
+                });
+              }
+            } else {
+              const stock = product.stockQuantity ?? 999;
+              if (product.inStock === false || stock < (item.quantity || 1)) {
+                outOfStockItems.push({
+                  name: item.name || item.productId,
+                  requested: item.quantity || 1,
+                  available: product.inStock === false ? 0 : stock,
+                });
+              }
+            }
+          }
+        } catch (stockErr) {
+          console.error('Stock check error for', item.productId, stockErr);
+        }
+      }
+
+      if (outOfStockItems.length > 0) {
+        return res.status(400).json({
+          error: 'Some items are out of stock',
+          outOfStockItems,
+        });
+      }
     }
 
     const auth = Buffer.from(`${keyId}:${keySecret}`).toString('base64');
