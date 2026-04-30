@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { HeartIcon, ChevronDownIcon } from 'lucide-react';
 import { products as fallbackProducts } from '../data/products';
@@ -41,6 +41,30 @@ export function ProductPage() {
     'description'
   );
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+
+  // Per-size availability for the currently selected color, derived from variantInventory.
+  // Returns null when the product has no variantInventory data (treat all sizes as available).
+  const sizeAvailability = useMemo<Record<string, boolean> | null>(() => {
+    if (!product?.variantInventory || product.variantInventory.length === 0) return null;
+    const map: Record<string, boolean> = {};
+    for (const size of product.sizes) {
+      map[size] = selectedColor
+        ? product.variantInventory.some(
+            (v) =>
+              v.size.toLowerCase() === size.toLowerCase() &&
+              v.color.toLowerCase() === selectedColor.toLowerCase() &&
+              v.stock > 0,
+          )
+        : product.variantInventory.some(
+            (v) => v.size.toLowerCase() === size.toLowerCase() && v.stock > 0,
+          );
+    }
+    return map;
+  }, [product, selectedColor]);
+
+  const isSelectedSizeOutOfStock =
+    !!selectedSize && !!sizeAvailability && !sizeAvailability[selectedSize];
+
   // Strip HTML tags for meta description
   const plainDescription = product?.description
     ? product.description.replace(/<[^>]*>/g, '').replace(/&[a-z]+;/gi, ' ').replace(/\s+/g, ' ').trim()
@@ -64,6 +88,13 @@ export function ProductPage() {
       trackViewItem({ id: product.id, name: product.name, price: product.price });
     }
   }, [product]);
+
+  // Clear the selected size when it becomes unavailable for the chosen color.
+  useEffect(() => {
+    if (selectedSize && sizeAvailability && !sizeAvailability[selectedSize]) {
+      setSelectedSize('');
+    }
+  }, [sizeAvailability, selectedSize]);
 
   // Get images for the currently selected color
   const currentImages = product
@@ -93,6 +124,10 @@ export function ProductPage() {
   const handleAddToCart = () => {
     if (!selectedSize) {
       alert('Please select a size');
+      return;
+    }
+    if (isSelectedSizeOutOfStock) {
+      alert('This size is currently out of stock');
       return;
     }
     addToCart({
@@ -240,15 +275,32 @@ export function ProductPage() {
                 )}
               </div>
               <div className="grid grid-cols-4 gap-3">
-                {product.sizes.map((size) =>
-                <button
-                  key={size}
-                  onClick={() => setSelectedSize(size)}
-                  className={`h-12 border text-sm uppercase tracking-widest transition-colors ${selectedSize === size ? 'border-foreground bg-foreground text-background' : 'border-border hover:border-foreground'}`}>
-                  
-                    {size}
-                  </button>
-                )}
+                {product.sizes.map((size) => {
+                  const available = sizeAvailability ? sizeAvailability[size] : true;
+                  const isSelected = selectedSize === size;
+                  return (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => available && setSelectedSize(size)}
+                      disabled={!available}
+                      aria-disabled={!available}
+                      aria-label={available ? `Select size ${size}` : `Size ${size} — out of stock`}
+                      title={available ? undefined : 'Out of stock'}
+                      className={`h-12 border text-sm uppercase tracking-widest transition-colors ${
+                        isSelected
+                          ? 'border-foreground bg-foreground text-background'
+                          : 'border-border hover:border-foreground'
+                      } ${
+                        !available
+                          ? 'opacity-40 cursor-not-allowed line-through hover:border-border'
+                          : ''
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -256,10 +308,11 @@ export function ProductPage() {
             <div className="flex gap-4 mb-12">
               <Button
                 onClick={handleAddToCart}
-                className="flex-1 h-14 text-sm"
+                disabled={isSelectedSizeOutOfStock}
+                className={`flex-1 h-14 text-sm ${isSelectedSizeOutOfStock ? 'opacity-60 cursor-not-allowed' : ''}`}
                 variant="primary">
                 
-                Add to Bag
+                {isSelectedSizeOutOfStock ? 'Out of Stock' : 'Add to Bag'}
               </Button>
               <Button
                 variant="outline"
