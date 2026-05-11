@@ -205,16 +205,13 @@ export function WriteReviewModal({
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs uppercase tracking-widest text-muted-foreground mb-2">
-              Photo (optional)
-            </label>
-            {photoPreview ? (
+          {photoPreview ? (
+            <div>
               <div className="relative inline-block">
                 <img
                   src={photoPreview}
                   alt="Review photo preview"
-                  className="h-24 w-24 object-cover border border-border"
+                  className="h-20 w-20 object-cover border border-border"
                 />
                 <button
                   type="button"
@@ -225,20 +222,20 @@ export function WriteReviewModal({
                   <Trash2Icon className="w-3.5 h-3.5" />
                 </button>
               </div>
-            ) : (
-              <label className="inline-flex items-center gap-2 h-11 px-4 border border-dashed border-border text-sm text-muted-foreground cursor-pointer hover:border-foreground hover:text-foreground transition-colors">
-                <ImagePlusIcon className="w-4 h-4" />
-                Add a photo
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="sr-only"
-                  onChange={handlePhotoSelect}
-                />
-              </label>
-            )}
-          </div>
+            </div>
+          ) : (
+            <label className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer transition-colors">
+              <ImagePlusIcon className="w-3.5 h-3.5" />
+              Attach a photo (optional)
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={handlePhotoSelect}
+              />
+            </label>
+          )}
 
           {error && <p className="text-sm text-red-500">{error}</p>}
         </form>
