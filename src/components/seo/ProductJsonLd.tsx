@@ -3,10 +3,14 @@ import { getProductUrl } from '../../hooks/useProducts';
 
 interface ProductJsonLdProps {
   product: Product;
+  aggregateRating?: {
+    value: number;
+    count: number;
+  };
 }
 
-export function ProductJsonLd({ product }: ProductJsonLdProps) {
-  const jsonLd = {
+export function ProductJsonLd({ product, aggregateRating }: ProductJsonLdProps) {
+  const jsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
@@ -30,6 +34,16 @@ export function ProductJsonLd({ product }: ProductJsonLdProps) {
     },
     category: product.category,
   };
+
+  if (aggregateRating && aggregateRating.count > 0) {
+    jsonLd.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: Number(aggregateRating.value.toFixed(2)),
+      reviewCount: aggregateRating.count,
+      bestRating: 5,
+      worstRating: 1,
+    };
+  }
 
   return (
     <script
