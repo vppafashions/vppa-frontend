@@ -1,8 +1,9 @@
 // Vercel Serverless Function: Product reviews via Appwrite API key
-// GET   /api/reviews?productId=xxx          -> list reviews for a product
-// GET   /api/reviews?productId=xxx&summary=1 -> { avg, count, distribution }
-// POST  /api/reviews                         -> create a review (public, no auth)
-// DELETE /api/reviews                        -> admin-only (X-Admin-Secret header)
+// GET    /api/reviews?productId=xxx           -> list reviews for a product
+// GET    /api/reviews?productId=xxx&summary=1 -> { avg, count, distribution }
+// POST   /api/reviews                          -> create a review (public, no auth)
+// POST   /api/reviews?setup=1                  -> admin-only: create the collection (idempotent)
+// DELETE /api/reviews                          -> admin-only (X-Admin-Secret header)
 
 import {
   corsHeaders,
@@ -13,7 +14,81 @@ import {
   Query,
 } from './_appwrite.js';
 
-const ADMIN_SECRET = process.env.REVIEWS_ADMIN_SECRET || process.env.APPWRITE_API_KEY;
+const APPWRITE_ENDPOINT = process.env.APPWRITE_ENDPOINT || 'https://fra.cloud.appwrite.io/v1';
+const APPWRITE_PROJECT_ID = process.env.APPWRITE_PROJECT_ID || '69aaa3a900228aff9ae5';
+const APPWRITE_API_KEY = process.env.APPWRITE_API_KEY;
+const DATABASE_ID = process.env.APPWRITE_DATABASE_ID || '69aaa3c3001805a8a9ef';
+const ADMIN_SECRET = process.env.REVIEWS_ADMIN_SECRET || APPWRITE_API_KEY;
+
+function appwriteHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'X-Appwrite-Project': APPWRITE_PROJECT_ID,
+    'X-Appwrite-Key': APPWRITE_API_KEY,
+  };
+}
+
+async function appwriteCall(method, path, body) {
+  const res = await fetch(`${APPWRITE_ENDPOINT}${path}`, {
+    method,
+    headers: appwriteHeaders(),
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const text = await res.text();
+  let parsed = {};
+  try { parsed = text ? JSON.parse(text) : {}; } catch { parsed = { raw: text }; }
+  return { ok: res.ok, status: res.status, body: parsed };
+}
+
+async function setupReviewsCollection() {
+  const COLLECTION_ID = COLLECTION_IDS.reviews;
+  const log = [];
+
+  const got = await appwriteCall('GET', `/databases/${DATABASE_ID}/collections/${COLLECTION_ID}`);
+  if (!got.ok) {
+    const created = await appwriteCall('POST', `/databases/${DATABASE_ID}/collections`, {
+      collectionId: COLLECTION_ID,
+      name: 'Reviews',
+      permissions: ['read("any")'],
+      documentSecurity: false,
+    });
+    if (!created.ok) throw new Error(`create collection failed: ${created.status} ${JSON.stringify(created.body)}`);
+    log.push('collection: created');
+  } else {
+    log.push('collection: exists');
+  }
+
+  const attrs = [
+    ['string', { key: 'productId', size: 64, required: true }],
+    ['integer', { key: 'rating', min: 1, max: 5, required: true }],
+    ['string', { key: 'title', size: 200, required: true }],
+    ['string', { key: 'comment', size: 3000, required: true }],
+    ['string', { key: 'authorName', size: 120, required: true }],
+    ['string', { key: 'authorEmail', size: 200, required: true }],
+    ['string', { key: 'photoUrl', size: 600, required: false, default: '' }],
+    ['boolean', { key: 'approved', required: false, default: true }],
+  ];
+  for (const [type, body] of attrs) {
+    const r = await appwriteCall('POST', `/databases/${DATABASE_ID}/collections/${COLLECTION_ID}/attributes/${type}`, body);
+    if (!r.ok && r.status !== 409) throw new Error(`attr ${body.key} failed: ${r.status} ${JSON.stringify(r.body)}`);
+    log.push(`attr ${body.key}: ${r.status === 409 ? 'exists' : 'created'}`);
+  }
+
+  // Best-effort indexes (need attributes to finish provisioning first).
+  for (const idx of [
+    { key: 'idx_product', type: 'key', attributes: ['productId'], orders: ['ASC'] },
+    { key: 'idx_approved', type: 'key', attributes: ['approved'], orders: ['ASC'] },
+  ]) {
+    try {
+      const r = await appwriteCall('POST', `/databases/${DATABASE_ID}/collections/${COLLECTION_ID}/indexes`, idx);
+      log.push(`${idx.key}: ${r.ok ? 'created' : (r.status === 409 ? 'exists' : `skipped ${r.status}`)}`);
+    } catch (e) {
+      log.push(`${idx.key}: skipped (${e.message})`);
+    }
+  }
+
+  return log;
+}
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
@@ -91,6 +166,16 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
+      // Admin-only setup route to create the reviews collection idempotently.
+      if (req.query && req.query.setup) {
+        const provided = req.headers['x-admin-secret'];
+        if (!ADMIN_SECRET || provided !== ADMIN_SECRET) {
+          return res.status(401).json({ error: 'unauthorized' });
+        }
+        const log = await setupReviewsCollection();
+        return res.status(200).json({ success: true, log });
+      }
+
       const { productId, rating, title, comment, authorName, authorEmail, photoUrl } = req.body || {};
 
       if (!productId) return res.status(400).json({ error: 'productId required' });
