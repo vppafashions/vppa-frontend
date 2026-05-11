@@ -8,6 +8,9 @@ import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import { Button } from '../components/ui/Button';
 import { SizeGuideModal } from '../components/products/SizeGuideModal';
+import { ReviewsSection } from '../components/products/ReviewsSection';
+import { StarRating } from '../components/products/StarRating';
+import { useReviews } from '../hooks/useReviews';
 import { trackViewItem } from '../lib/analytics';
 import { useDocumentHead } from '../hooks/useDocumentHead';
 import { ProductJsonLd } from '../components/seo/ProductJsonLd';
@@ -41,6 +44,9 @@ export function ProductPage() {
     'description'
   );
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+
+  // Aggregated review data for this product (used by JSON-LD + rating badge).
+  const { summary: reviewSummary } = useReviews(product?.id);
 
   // Per-size availability for the currently selected color, derived from variantInventory.
   // Returns null when the product has no variantInventory data (treat all sizes as available).
@@ -198,6 +204,18 @@ export function ProductPage() {
               <h1 className="font-serif text-3xl md:text-4xl mb-4">
                 {product.name}
               </h1>
+              {reviewSummary.count > 0 && (
+                <a
+                  href="#reviews-heading"
+                  className="inline-flex items-center gap-2 mb-3 hover:opacity-80"
+                >
+                  <StarRating value={reviewSummary.avg} size={14} />
+                  <span className="text-xs text-muted-foreground">
+                    {reviewSummary.avg.toFixed(1)} ({reviewSummary.count} review
+                    {reviewSummary.count === 1 ? '' : 's'})
+                  </span>
+                </a>
+              )}
               <p className="text-2xl font-light">
                 ₹{product.price.toLocaleString('en-IN')}
               </p>
@@ -427,6 +445,9 @@ export function ProductPage() {
             </div>
           </div>
         </div>
+        <div className="mt-4">
+          <ReviewsSection productId={product.id} productName={product.name} />
+        </div>
       </div>
       {product.sizeGuideId && (
         <SizeGuideModal
@@ -435,7 +456,16 @@ export function ProductPage() {
           onClose={() => setSizeGuideOpen(false)}
         />
       )}
-      {product && <ProductJsonLd product={product} />}
+      {product && (
+        <ProductJsonLd
+          product={product}
+          aggregateRating={
+            reviewSummary.count > 0
+              ? { value: reviewSummary.avg, count: reviewSummary.count }
+              : undefined
+          }
+        />
+      )}
       {product && (
         <BreadcrumbJsonLd
           items={[

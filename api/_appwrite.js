@@ -17,6 +17,7 @@ const COLLECTION_IDS = {
   sizeGuides: 'size-guides',
   returns: 'returns',
   coupons: 'coupons',
+  reviews: 'reviews',
 };
 
 function headers() {
