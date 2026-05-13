@@ -6,7 +6,7 @@ export function HeroBanner() {
   const { gender } = useGender();
   const isWomen = gender === 'women';
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-black">
+    <div className="relative h-[85vh] md:h-screen w-full overflow-hidden bg-black">
       <div className="absolute inset-0">
         <img
           src={isWomen
@@ -19,10 +19,10 @@ export function HeroBanner() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30" />
       </div>
 
-      <div className="relative h-full flex flex-col items-center justify-between text-white px-4 py-8 md:py-12">
+      <div className="relative h-full flex flex-col items-center justify-between text-white px-4 py-6 md:py-12">
         {/* Top */}
-        <div className="w-full flex flex-col items-center mt-20 md:mt-12 animate-fade-in-up">
-          <div className="w-px h-12 bg-primary/50 mb-6"></div>
+        <div className="w-full flex flex-col items-center mt-10 md:mt-12 animate-fade-in-up">
+          <div className="w-px h-10 md:h-12 bg-primary/50 mb-4 md:mb-6"></div>
           <p className="text-[10px] md:text-xs tracking-[0.4em] uppercase font-light text-primary">
             Issue 01 — Spring/Summer 2026
           </p>
@@ -35,7 +35,7 @@ export function HeroBanner() {
             animationDelay: '200ms'
           }}>
           
-          <h1 className="font-magazine text-7xl md:text-[12rem] leading-none font-light tracking-tight mb-6 md:mb-8">
+          <h1 className="font-magazine text-6xl md:text-[12rem] leading-none font-light tracking-tight mb-4 md:mb-8">
             VPPA
           </h1>
           <p className="text-xs md:text-sm tracking-[0.4em] uppercase font-light max-w-2xl mx-auto text-white/80">

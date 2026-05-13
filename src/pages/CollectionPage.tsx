@@ -79,7 +79,7 @@ export function CollectionPage() {
   return (
     <main className="bg-background">
       {/* 1. Cinematic Hero */}
-      <div className="relative h-screen w-full overflow-hidden bg-black">
+      <div className="relative h-[85vh] md:h-screen w-full overflow-hidden bg-black">
         <div className="absolute inset-0">
           <img
             src={collection.image}
@@ -89,15 +89,15 @@ export function CollectionPage() {
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center justify-end text-white px-4 pb-10 md:pb-24 text-center">
-          <span className="text-xs tracking-[0.4em] uppercase text-primary mb-4 md:mb-6">
+        <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center justify-end text-white px-4 pb-8 md:pb-24 text-center">
+          <span className="text-xs tracking-[0.4em] uppercase text-primary mb-3 md:mb-6">
             {collection.tagline}
           </span>
-          <h1 className="font-magazine italic text-6xl md:text-8xl lg:text-9xl mb-4 md:mb-6 font-light leading-none animate-fade-in-up">
+          <h1 className="font-magazine italic text-5xl md:text-8xl lg:text-9xl mb-3 md:mb-6 font-light leading-none animate-fade-in-up">
             {collection.name}
           </h1>
           <p
-            className="text-white/70 font-light max-w-2xl mb-10 md:mb-16 text-sm md:text-base leading-relaxed animate-fade-in-up"
+            className="text-white/70 font-light max-w-2xl mb-6 md:mb-16 text-sm md:text-base leading-relaxed animate-fade-in-up"
             style={{
               animationDelay: '200ms'
             }}>
@@ -126,9 +126,9 @@ export function CollectionPage() {
 
       <div ref={contentRef}>
         {/* 2. Collection Story Section */}
-        <section className="py-16 md:py-48 px-4 border-b border-border/30">
+        <section className="py-10 md:py-48 px-4 border-b border-border/30">
           <div className="container mx-auto max-w-5xl text-center">
-            <h2 className="font-magazine italic text-3xl md:text-5xl lg:text-6xl leading-tight md:leading-tight lg:leading-tight font-light text-foreground mb-8 md:mb-12">
+            <h2 className="font-magazine italic text-2xl md:text-5xl lg:text-6xl leading-snug md:leading-tight lg:leading-tight font-light text-foreground mb-6 md:mb-12">
               "{getCollectionQuote()}"
             </h2>
             <div className="flex items-center justify-center gap-4">
@@ -144,7 +144,7 @@ export function CollectionPage() {
         {/* 3. Hero Product Feature */}
         {heroProduct &&
         <section className="md:min-h-screen flex flex-col md:flex-row w-full border-b border-border/30">
-            <div className="w-full md:w-[60%] h-[50vh] md:h-screen relative overflow-hidden group">
+            <div className="w-full md:w-[60%] h-[40vh] md:h-screen relative overflow-hidden group">
               <Link
               to={getProductUrl(heroProduct)}
               className="block w-full h-full">
@@ -161,21 +161,21 @@ export function CollectionPage() {
                 <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </Link>
             </div>
-            <div className="w-full md:w-[40%] flex flex-col justify-center px-6 py-10 md:p-16 lg:p-24 bg-background">
-              <div className="flex items-center gap-4 mb-6 md:mb-12">
+            <div className="w-full md:w-[40%] flex flex-col justify-center px-6 py-8 md:p-16 lg:p-24 bg-background">
+              <div className="flex items-center gap-4 mb-4 md:mb-12">
                 <span className="text-xs tracking-[0.3em] uppercase text-primary">
                   Featured Piece
                 </span>
                 <div className="h-px w-12 bg-primary"></div>
               </div>
-              <h3 className="font-magazine italic text-4xl md:text-6xl mb-4 md:mb-6 font-light leading-none">
+              <h3 className="font-magazine italic text-3xl md:text-6xl mb-3 md:mb-6 font-light leading-none">
                 {heroProduct.name}
               </h3>
-              <p className="text-2xl font-light mb-6 md:mb-8">
+              <p className="text-xl md:text-2xl font-light mb-4 md:mb-8">
                 ₹{heroProduct.price.toLocaleString('en-IN')}
               </p>
               <div
-                className="text-muted-foreground leading-relaxed mb-8 md:mb-12 font-light text-base md:text-lg line-clamp-4"
+                className="text-muted-foreground leading-relaxed mb-6 md:mb-12 font-light text-sm md:text-lg line-clamp-3 md:line-clamp-4"
                 dangerouslySetInnerHTML={{ __html: heroProduct.description }}
               />
               <Link
@@ -196,13 +196,13 @@ export function CollectionPage() {
 
         {/* 4. Product Grid */}
         {remainingProducts.length > 0 &&
-        <section className="py-16 md:py-32 bg-background">
+        <section className="py-10 md:py-32 bg-background">
             <div className="container mx-auto px-4 md:px-8">
-              <div className="flex flex-col items-center text-center mb-10 md:mb-20">
-                <h2 className="font-magazine italic text-4xl md:text-6xl mb-4 md:mb-6 font-light">
+              <div className="flex flex-col items-center text-center mb-6 md:mb-20">
+                <h2 className="font-magazine italic text-3xl md:text-6xl mb-3 md:mb-6 font-light">
                   The Full Collection
                 </h2>
-                <div className="flex items-center gap-4 mb-6 md:mb-8">
+                <div className="flex items-center gap-4 mb-4 md:mb-8">
                   <div className="w-8 h-px bg-border"></div>
                   <span className="text-xs tracking-[0.4em] uppercase text-muted-foreground">
                     {remainingProducts.length + 1} Pieces
@@ -213,14 +213,14 @@ export function CollectionPage() {
               </div>
 
               {/* Minimal Filter Bar */}
-              <div className="flex justify-between items-center mb-6 pb-4 md:mb-12 md:pb-6 border-b border-border/30">
+              <div className="flex justify-between items-center mb-4 pb-3 md:mb-12 md:pb-6 border-b border-border/30">
                 <div className="text-xs text-muted-foreground uppercase tracking-[0.2em]">
                   Showing {remainingProducts.length} items
                 </div>
               </div>
 
               {/* Asymmetric Magazine Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10 md:gap-y-16">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-8 md:gap-y-16">
                 {remainingProducts.map((product, index) =>
               <div
                 key={product.id}
@@ -236,15 +236,15 @@ export function CollectionPage() {
 
         {/* 5. Next Collection Teaser */}
         {nextCollection &&
-        <section className="py-16 md:py-40 bg-[#0a0a0a] text-white text-center px-4 border-t border-white/10">
+        <section className="py-10 md:py-40 bg-[#0a0a0a] text-white text-center px-4 border-t border-white/10">
             <div className="container mx-auto max-w-4xl flex flex-col items-center">
-              <span className="text-xs tracking-[0.4em] uppercase text-primary mb-4 md:mb-8">
+              <span className="text-xs tracking-[0.4em] uppercase text-primary mb-3 md:mb-8">
                 Continue the Story
               </span>
-              <h2 className="font-magazine italic text-5xl md:text-7xl lg:text-8xl mb-4 md:mb-6 font-light text-white/90">
+              <h2 className="font-magazine italic text-4xl md:text-7xl lg:text-8xl mb-3 md:mb-6 font-light text-white/90">
                 {nextCollection.name}
               </h2>
-              <p className="text-sm md:text-base tracking-[0.2em] uppercase text-white/60 mb-8 md:mb-12 max-w-xl">
+              <p className="text-xs md:text-base tracking-[0.2em] uppercase text-white/60 mb-6 md:mb-12 max-w-xl">
                 {nextCollection.tagline}
               </p>
               <Link
