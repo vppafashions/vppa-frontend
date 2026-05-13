@@ -150,10 +150,10 @@ export function ProductPage() {
     setActiveAccordion(activeAccordion === section ? null : section);
   };
   return (
-    <main className="pb-24">
-      <div className="container mx-auto px-4 md:px-8 py-8">
+    <main className="pb-12 md:pb-24">
+      <div className="container mx-auto px-4 md:px-8 py-4 md:py-8">
         {/* Breadcrumbs */}
-        <div className="text-xs uppercase tracking-widest text-muted-foreground mb-8 flex gap-2">
+        <div className="text-xs uppercase tracking-widest text-muted-foreground mb-4 md:mb-8 flex gap-2">
           <Link to="/" className="hover:text-foreground">
             Home
           </Link>
@@ -168,7 +168,7 @@ export function ProductPage() {
           <span className="text-foreground">{product.name}</span>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-12 lg:gap-24">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-24">
           {/* Image Gallery */}
           <div className="lg:w-3/5 flex flex-col-reverse md:flex-row gap-4 lg:sticky lg:top-24 lg:self-start">
             <div className="flex md:flex-col gap-4 overflow-x-auto md:overflow-visible md:w-24 flex-shrink-0">
@@ -197,7 +197,7 @@ export function ProductPage() {
 
           {/* Product Info */}
           <div className="lg:w-2/5 flex flex-col">
-            <div className="mb-8">
+            <div className="mb-6 md:mb-8">
               <p className="text-xs uppercase tracking-widest text-primary mb-2">
                 {product.collectionSlug} Collection
               </p>
@@ -222,7 +222,7 @@ export function ProductPage() {
             </div>
 
             {/* Color Selection */}
-            <div className="mb-8">
+            <div className="mb-6 md:mb-8">
               <div className="flex justify-between mb-3">
                 <span className="text-sm uppercase tracking-widest">
                   Color{selectedColor ? ` — ${selectedColor}` : ''}
@@ -280,7 +280,7 @@ export function ProductPage() {
             </div>
 
             {/* Size Selection */}
-            <div className="mb-8">
+            <div className="mb-6 md:mb-8">
               <div className="flex justify-between mb-3">
                 <span className="text-sm uppercase tracking-widest">Size</span>
                 {product.sizeGuideId && (
@@ -323,7 +323,7 @@ export function ProductPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-4 mb-12">
+            <div className="flex gap-4 mb-8 md:mb-12">
               <Button
                 onClick={handleAddToCart}
                 disabled={isSelectedSizeOutOfStock}
@@ -357,7 +357,7 @@ export function ProductPage() {
             </div>
 
             {/* Social Share */}
-            <div className="mb-12">
+            <div className="mb-8 md:mb-12">
               <SocialShare
                 url={`https://vppafashions.com${getProductUrl(product)}`}
                 title={`${product.name} | VPPA Fashions`}

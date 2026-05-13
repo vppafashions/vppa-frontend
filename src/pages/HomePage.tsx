@@ -25,9 +25,9 @@ export function HomePage() {
       <HeroBanner />
 
       {/* Brand Manifesto */}
-      <section className="py-32 md:py-48 px-4 border-b border-border/30">
+      <section className="py-16 md:py-48 px-4 border-b border-border/30">
         <div className="container mx-auto max-w-5xl text-center">
-          <h2 className="font-magazine italic text-4xl md:text-6xl lg:text-7xl leading-tight md:leading-tight lg:leading-tight font-light text-foreground mb-12">
+          <h2 className="font-magazine italic text-4xl md:text-6xl lg:text-7xl leading-tight md:leading-tight lg:leading-tight font-light text-foreground mb-8 md:mb-12">
             {isWomen
               ? '"Grace meets boldness. Every drape, every detail, every hue — crafted for women who define their own elegance."'
               : '"We don\'t follow trends. We set the standard. Every stitch, every fabric, every silhouette — crafted for men who lead, not follow."'
@@ -46,9 +46,9 @@ export function HomePage() {
       <CollectionShowcase />
 
       {/* Editorial Break */}
-      <section className="py-32 md:py-40 bg-[#0a0a0a] text-white text-center px-4">
+      <section className="py-16 md:py-40 bg-[#0a0a0a] text-white text-center px-4">
         <div className="container mx-auto max-w-4xl">
-          <h2 className="font-magazine italic text-5xl md:text-7xl lg:text-8xl mb-8 font-light text-white/90">
+          <h2 className="font-magazine italic text-5xl md:text-7xl lg:text-8xl mb-6 md:mb-8 font-light text-white/90">
             Four Pillars. One Vision.
           </h2>
           <p className="text-xs md:text-sm tracking-[0.4em] uppercase text-primary">
@@ -60,11 +60,11 @@ export function HomePage() {
       <FeaturedProducts />
 
       {/* Brand Story — SEO Content Section */}
-      <section className="py-24 md:py-32 px-4 border-t border-border/30">
+      <section className="py-12 md:py-32 px-4 border-t border-border/30">
         <div className="container mx-auto max-w-5xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16">
             <div>
-              <h2 className="font-magazine italic text-4xl md:text-5xl mb-8 font-light">
+              <h2 className="font-magazine italic text-4xl md:text-5xl mb-6 md:mb-8 font-light">
                 {isWomen ? 'Premium Women\'s Fashion, Crafted in India' : 'Premium Men\'s Fashion, Crafted in India'}
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-6">
@@ -84,8 +84,8 @@ export function HomePage() {
               </p>
             </div>
             <div>
-              <h2 className="font-magazine italic text-4xl md:text-5xl mb-8 font-light">Why Choose VPPA?</h2>
-              <ul className="space-y-6 text-muted-foreground">
+              <h2 className="font-magazine italic text-4xl md:text-5xl mb-6 md:mb-8 font-light">Why Choose VPPA?</h2>
+              <ul className="space-y-5 md:space-y-6 text-muted-foreground">
                 <li className="flex gap-4">
                   <span className="text-primary font-semibold text-lg">01</span>
                   <div>
@@ -121,15 +121,15 @@ export function HomePage() {
       </section>
 
       {/* Newsletter */}
-      <section className="py-32 md:py-40 bg-accent/5 border-t border-border/30">
+      <section className="py-16 md:py-40 bg-accent/5 border-t border-border/30">
         <div className="container mx-auto px-4 max-w-2xl text-center">
-          <span className="text-xs tracking-[0.4em] uppercase text-primary mb-6 block">
+          <span className="text-xs tracking-[0.4em] uppercase text-primary mb-4 md:mb-6 block">
             The Inner Circle
           </span>
-          <h2 className="font-magazine italic text-5xl md:text-6xl mb-8 font-light">
+          <h2 className="font-magazine italic text-5xl md:text-6xl mb-6 md:mb-8 font-light">
             Stay in the Know
           </h2>
-          <p className="text-muted-foreground mb-12 font-light leading-relaxed">
+          <p className="text-muted-foreground mb-8 md:mb-12 font-light leading-relaxed">
             Subscribe to receive exclusive editorial content, early access to
             new collections, and private invitations to VPPA events.
           </p>

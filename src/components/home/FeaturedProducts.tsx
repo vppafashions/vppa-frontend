@@ -22,13 +22,13 @@ export function FeaturedProducts() {
   if (!heroProduct) return null;
 
   return (
-    <section className="py-32 bg-background">
+    <section className="py-16 md:py-32 bg-background">
       <div className="container mx-auto px-4 md:px-8">
-        <div className="flex flex-col items-center text-center mb-24">
-          <span className="text-xs tracking-[0.4em] uppercase text-primary mb-6">
+        <div className="flex flex-col items-center text-center mb-12 md:mb-24">
+          <span className="text-xs tracking-[0.4em] uppercase text-primary mb-4 md:mb-6">
             Curated Selection
           </span>
-          <h2 className="font-magazine italic text-6xl md:text-7xl lg:text-8xl mb-6 font-light">
+          <h2 className="font-magazine italic text-5xl md:text-7xl lg:text-8xl mb-4 md:mb-6 font-light">
             The Edit
           </h2>
           <p className="text-muted-foreground tracking-widest uppercase text-sm max-w-md">
@@ -39,7 +39,7 @@ export function FeaturedProducts() {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
             <div className="md:col-span-2 aspect-square bg-accent/10 animate-pulse rounded" />
-            <div className="flex flex-col gap-12">
+            <div className="flex flex-col gap-8 md:gap-12">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="aspect-square bg-accent/10 animate-pulse rounded" />
               ))}
@@ -78,7 +78,7 @@ export function FeaturedProducts() {
             </div>
 
             {/* Side Column Products */}
-            <div className="flex flex-col gap-12">
+            <div className="flex flex-col gap-8 md:gap-12">
               {sideProducts.map((product) =>
               <div key={product.id} className="group">
                   <Link to={getProductUrl(product)} className="block">
