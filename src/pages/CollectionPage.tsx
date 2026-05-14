@@ -22,6 +22,9 @@ export function CollectionPage() {
   const collectionProducts = apiProducts.length > 0
     ? apiProducts
     : loading ? [] : fallbackProducts.filter((p) => p.collectionSlug === slug);
+  // Use the newest product's first image as the hero, falling back to the
+  // static collection image (collections.ts) when the API has nothing yet.
+  const heroImage = apiProducts[0]?.images?.[0] || collection?.image;
   // Determine next collection for the teaser
   const nextCollectionIndex = (collectionIndex + 1) % collections.length;
   const nextCollection = getGenderedCollection(collections[nextCollectionIndex], gender);
@@ -30,7 +33,7 @@ export function CollectionPage() {
     title: collection ? `${collection.name} ${genderLabel} Collection | VPPA Fashions` : 'Collection | VPPA Fashions',
     description: collection?.description,
     canonical: collection ? `https://vppafashions.com/collection/${collection.slug}` : undefined,
-    ogImage: collection?.image,
+    ogImage: heroImage,
   });
 
   useEffect(() => {
@@ -82,7 +85,7 @@ export function CollectionPage() {
       <div className="relative h-[85vh] md:h-screen w-full overflow-hidden bg-black">
         <div className="absolute inset-0">
           <img
-            src={collection.image}
+            src={heroImage}
             alt={collection.name}
             className="w-full h-full object-cover object-center opacity-80" />
           
