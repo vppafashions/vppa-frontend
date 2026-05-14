@@ -49,17 +49,21 @@ export default async function handler(req, res) {
 
     if (collection) {
       // Frontend uses: velocity, presence, power, attitude
-      // Appwrite stores: velocity_men, presence_men, power_men, attitude_men, velocity_women, etc.
+      // Appwrite stores either bare ('velocity') or suffixed ('velocity_men', 'velocity_women')
       const base = collection.replace(/_men$|_women$/, '');
       const suffix = gender === 'women' ? '_women' : '_men';
       const withSuffix = `${base}${suffix}`;
       queries.push(Query.equal('collectionSlug', [base, withSuffix]));
     }
 
-    // When no collection but gender is specified, filter all products by gender suffix
-    if (!collection && gender) {
-      const suffix = gender === 'women' ? '_women' : '_men';
-      queries.push(Query.contains('collectionSlug', suffix));
+    if (gender) {
+      // Match the actual `gender` field on the product (stored as 'Men' / 'Women').
+      // Accept either case from the URL param for safety.
+      const g = String(gender).toLowerCase();
+      const variants = g === 'women'
+        ? ['Women', 'women', 'WOMEN']
+        : ['Men', 'men', 'MEN'];
+      queries.push(Query.equal('gender', variants));
     }
 
     if (featured === 'true') {
