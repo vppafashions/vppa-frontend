@@ -5,8 +5,10 @@ import { useGender } from '../../context/GenderContext';
 import { products as fallbackProducts } from '../../data/products';
 
 export function FeaturedProducts() {
-  const { gender } = useGender();
-  const { products: apiProducts, loading } = useProducts({ gender });
+  // Intentionally omit the gender filter here - the homepage Edit pulls from all
+  // real products so the section never falls back to (now empty) static data.
+  useGender();
+  const { products: apiProducts, loading } = useProducts({});
 
   // Use API products if available, fall back to static data
   const allProducts = apiProducts.length > 0 ? apiProducts : fallbackProducts;
