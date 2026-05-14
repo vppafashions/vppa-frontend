@@ -1,11 +1,40 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRightIcon } from 'lucide-react';
-import { collections, getGenderedCollection } from '../../data/collections';
+import { collections, getGenderedCollection, type Collection } from '../../data/collections';
 import { useGender } from '../../context/GenderContext';
+import { useProducts } from '../../hooks/useProducts';
+
+// Pulls the newest product image for a given collection+gender from Appwrite,
+// falling back to the static `image` defined in collections.ts when the API
+// returns nothing (offline, empty collection, etc).
+function useCollectionHeroImage(slug: string, gender: 'men' | 'women', fallback: string) {
+  const { products } = useProducts({ collection: slug, gender, limit: 1 });
+  const image = products[0]?.images?.[0];
+  return image || fallback;
+}
+
 export function CollectionShowcase() {
   const { gender } = useGender();
-  const [velocity, presence, power, attitude] = collections.map((c) => getGenderedCollection(c, gender));
+  const [velocityBase, presenceBase, powerBase, attitudeBase] = collections.map((c) =>
+    getGenderedCollection(c, gender)
+  );
+  const velocity: Collection = {
+    ...velocityBase,
+    image: useCollectionHeroImage('velocity', gender, velocityBase.image),
+  };
+  const presence: Collection = {
+    ...presenceBase,
+    image: useCollectionHeroImage('presence', gender, presenceBase.image),
+  };
+  const power: Collection = {
+    ...powerBase,
+    image: useCollectionHeroImage('power', gender, powerBase.image),
+  };
+  const attitude: Collection = {
+    ...attitudeBase,
+    image: useCollectionHeroImage('attitude', gender, attitudeBase.image),
+  };
   return (
     <div className="w-full bg-background">
       {/* VELOCITY - Chapter 01 (Image Left, Text Right) */}
