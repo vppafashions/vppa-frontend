@@ -34,6 +34,10 @@ export default async function handler(req, res) {
           return res.status(404).json({ error: 'Product not found' });
         }
         const doc = result.documents[0];
+        // Hidden products 404 on direct deep links too (consistent with sitemap exclusion)
+        if (doc.displayOnCollectionPage === false) {
+          return res.status(404).json({ error: 'Product not found' });
+        }
         const extras = await fetchExtras(doc.$id);
         return res.status(200).json({ product: transformProduct(doc, extras) });
       } catch {
