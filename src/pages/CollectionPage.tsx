@@ -78,7 +78,10 @@ export function CollectionPage() {
         return 'Redefining modern masculinity through uncompromising quality and fearless expression.';
     }
   };
-  const [heroProduct, ...remainingProducts] = collectionProducts;
+  const [heroProduct] = collectionProducts;
+  // Show every product in the grid (including the featured hero) so the count
+  // matches the backoffice exactly and avoids any "missing item" confusion.
+  const gridProducts = collectionProducts;
   return (
     <main className="bg-background">
       {/* 1. Cinematic Hero */}
@@ -198,7 +201,7 @@ export function CollectionPage() {
         }
 
         {/* 4. Product Grid */}
-        {remainingProducts.length > 0 &&
+        {gridProducts.length > 0 &&
         <section className="py-10 md:py-32 bg-background">
             <div className="container mx-auto px-4 md:px-8">
               <div className="flex flex-col items-center text-center mb-6 md:mb-20">
@@ -208,7 +211,7 @@ export function CollectionPage() {
                 <div className="flex items-center gap-4 mb-4 md:mb-8">
                   <div className="w-8 h-px bg-border"></div>
                   <span className="text-xs tracking-[0.4em] uppercase text-muted-foreground">
-                    {remainingProducts.length + 1} Pieces
+                    {gridProducts.length} Pieces
                   </span>
                   <div className="w-8 h-px bg-border"></div>
                 </div>
@@ -218,16 +221,16 @@ export function CollectionPage() {
               {/* Minimal Filter Bar */}
               <div className="flex justify-between items-center mb-4 pb-3 md:mb-12 md:pb-6 border-b border-border/30">
                 <div className="text-xs text-muted-foreground uppercase tracking-[0.2em]">
-                  Showing {remainingProducts.length} items
+                  Showing {gridProducts.length} items
                 </div>
               </div>
 
               {/* Asymmetric Magazine Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-8 md:gap-y-16">
-                {remainingProducts.map((product, index) =>
+                {gridProducts.map((product, index) =>
               <div
                 key={product.id}
-                className={`${remainingProducts.length === 3 && index === 0 ? 'md:col-span-2 lg:col-span-2' : ''}`}>
+                className={`${gridProducts.length === 3 && index === 0 ? 'md:col-span-2 lg:col-span-2' : ''}`}>
                 
                     <ProductCard product={product} />
                   </div>
