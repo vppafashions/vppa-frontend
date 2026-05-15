@@ -86,6 +86,8 @@ export default async function handler(req, res) {
 
     // Dynamic product pages
     for (const product of allProducts) {
+      // Skip products hidden from the storefront so search engines don't index them
+      if (product.displayOnCollectionPage === false) continue;
       const productSlug = product.slug || product.$id;
       const lastmod = toW3CDate(product.$updatedAt || product.$createdAt);
 
