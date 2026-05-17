@@ -87,23 +87,33 @@ export function Footer() {
             </h4>
             <ul className="space-y-4 text-sm text-gray-400">
               <li>
-                <a href="https://www.instagram.com/vppafashions" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                <a href="https://maps.app.goo.gl/CizcZjAoyRkcRNVY7?g_st=ic" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                  Shop Location
+                </a>
+              </li>
+              <li>
+                <a href="https://www.instagram.com/vppa_fashions?igsh=ZTZiNDFhcmx2bnox" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
                   Instagram
                 </a>
               </li>
               <li>
-                <a href="https://www.facebook.com/vppafashions" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                <a href="https://youtube.com/@VPPA_fashions?si=uR175OmhS8k4R06b" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                  YouTube
+                </a>
+              </li>
+              <li>
+                <a href="https://www.facebook.com/share/1G8UxJTThR/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
                   Facebook
                 </a>
               </li>
               <li>
-                <a href="https://x.com/vppafashions" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
-                  Twitter / X
+                <a href="https://whatsapp.com/channel/0029Vb6NM3P4Y9lgn9SpRx1N" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                  WhatsApp
                 </a>
               </li>
               <li>
-                <a href="https://www.pinterest.com/vppafashions" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
-                  Pinterest
+                <a href="https://t.me/VPPAfashions" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                  Telegram
                 </a>
               </li>
             </ul>
