@@ -191,16 +191,18 @@ export default async function handler(req, res) {
         const totalTax = Math.round((cgstAmount + sgstAmount) * 100) / 100;
         const grandTotal = Math.round(subtotal * 100) / 100;
 
-        // Get next invoice number
+        // Get next ECOM invoice number
+        const ECOM_PREFIX = 'ECOM-';
         const invList = await listDocuments(COLLECTION_IDS.invoices, [
           Query.orderDesc('$createdAt'),
-          Query.limit(1),
+          Query.limit(100),
         ]);
-        let nextNum = '1001';
-        if (invList.documents && invList.documents.length > 0) {
-          const last = parseInt(invList.documents[0].invoiceNumber, 10);
-          nextNum = String(isNaN(last) ? 1001 : last + 1);
-        }
+        const ecomNums = (invList.documents || [])
+          .filter((d) => d.invoiceNumber && d.invoiceNumber.startsWith(ECOM_PREFIX))
+          .map((d) => parseInt(d.invoiceNumber.replace(ECOM_PREFIX, ''), 10))
+          .filter((n) => !isNaN(n));
+        const maxNum = ecomNums.length > 0 ? Math.max(...ecomNums) : 1000;
+        const nextNum = `${ECOM_PREFIX}${maxNum + 1}`;
 
         const today = new Date().toISOString().split('T')[0];
         await createDocument(COLLECTION_IDS.invoices, 'unique()', {
