@@ -18,6 +18,7 @@ const COLLECTION_IDS = {
   returns: 'returns',
   coupons: 'coupons',
   reviews: 'reviews',
+  invoices: 'invoices',
 };
 
 function headers() {

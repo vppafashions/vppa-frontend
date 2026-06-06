@@ -164,6 +164,74 @@ export default async function handler(req, res) {
         // Don't fail the order creation if email fails
       }
 
+      // Auto-generate invoice (fire and forget)
+      try {
+        const parsedItems = typeof doc.items === 'string' ? JSON.parse(doc.items) : doc.items || [];
+        const DEFAULT_GST_RATE = 5;
+        const DEFAULT_CGST_RATE = 2.5;
+        const DEFAULT_SGST_RATE = 2.5;
+        const DEFAULT_HSN_CODE = '60062200';
+
+        const invoiceItems = parsedItems.map((item) => {
+          const rate = item.price;
+          const quantity = item.quantity || 1;
+          const total = rate * quantity;
+          const taxableValue = Math.round((total / (1 + DEFAULT_GST_RATE / 100)) * 100) / 100;
+          const totalItemTax = Math.round((total - taxableValue) * 100) / 100;
+          const cgst = Math.round((totalItemTax / 2) * 100) / 100;
+          const sgst = Math.round((totalItemTax - cgst) * 100) / 100;
+          const name = `${item.name}${item.size ? ` (${item.size})` : ''}${item.color ? ` - ${item.color}` : ''}`;
+          return { name, quantity, rate, originalRate: rate, hsn: DEFAULT_HSN_CODE, gstPercent: DEFAULT_GST_RATE, cgstPercent: DEFAULT_CGST_RATE, sgstPercent: DEFAULT_SGST_RATE, taxableValue, cgst, sgst, total };
+        });
+
+        const subtotal = invoiceItems.reduce((s, i) => s + i.total, 0);
+        const taxableAmount = Math.round(invoiceItems.reduce((s, i) => s + i.taxableValue, 0) * 100) / 100;
+        const cgstAmount = Math.round(invoiceItems.reduce((s, i) => s + i.cgst, 0) * 100) / 100;
+        const sgstAmount = Math.round(invoiceItems.reduce((s, i) => s + i.sgst, 0) * 100) / 100;
+        const totalTax = Math.round((cgstAmount + sgstAmount) * 100) / 100;
+        const grandTotal = Math.round(subtotal * 100) / 100;
+
+        // Get next invoice number
+        const invList = await listDocuments(COLLECTION_IDS.invoices, [
+          Query.orderDesc('$createdAt'),
+          Query.limit(1),
+        ]);
+        let nextNum = '1001';
+        if (invList.documents && invList.documents.length > 0) {
+          const last = parseInt(invList.documents[0].invoiceNumber, 10);
+          nextNum = String(isNaN(last) ? 1001 : last + 1);
+        }
+
+        const today = new Date().toISOString().split('T')[0];
+        await createDocument(COLLECTION_IDS.invoices, 'unique()', {
+          invoiceNumber: nextNum,
+          invoiceDate: today,
+          orderNumber: `#${doc.$id.slice(0, 8)}`,
+          orderDate: today,
+          customerName: doc.customerName || '',
+          customerAddress: doc.address || '',
+          customerPhone: doc.phone || '',
+          customerEmail: doc.email || '',
+          customerPin: '',
+          customerState: '',
+          stateCode: '',
+          placeOfSupply: '',
+          modeOfTransport: '',
+          items: JSON.stringify(invoiceItems),
+          subtotal: Math.round(subtotal * 100) / 100,
+          taxableAmount,
+          cgstAmount,
+          sgstAmount,
+          totalTax,
+          shippingAmount: 0,
+          discount: 0,
+          grandTotal,
+          status: 'paid',
+        });
+      } catch (invoiceError) {
+        console.error('Auto-invoice generation error:', invoiceError);
+      }
+
       return res.status(201).json(doc);
     }
 
