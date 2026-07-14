@@ -8,7 +8,6 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { getCartCount, setIsCartOpen } = useCart();
   const location = useLocation();
-  const isHomePage = location.pathname === '/';
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 80);
@@ -19,14 +18,17 @@ export function Header() {
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location]);
-  const isTransparent = isHomePage && !isScrolled;
   return (
     <>
       <header
         className={`fixed top-0 left-0 right-0 z-40 transition-all duration-700 ease-in-out ${isScrolled ? 'py-3 px-4 md:px-8' : 'py-0 px-0'}`}>
         
         <div
-          className={`transition-all duration-700 ease-in-out ${isScrolled ? 'max-w-3xl mx-auto rounded-full bg-[#0a0a0a]/85 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/10 px-6 md:px-8 text-white' : 'max-w-full mx-0 rounded-none bg-transparent backdrop-blur-none shadow-none border-transparent px-4 md:px-8 ' + (isTransparent ? 'text-white' : 'bg-background/95 backdrop-blur-md text-foreground border-b border-border/20')}`}>
+          className={`transition-all duration-700 ease-in-out text-foreground ${
+            isScrolled
+              ? 'max-w-3xl mx-auto rounded-full bg-white/95 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] border border-black/5 px-6 md:px-8'
+              : 'max-w-full mx-0 rounded-none bg-white border-b border-black/5 px-4 md:px-8 shadow-none'
+          }`}>
           
           <div
             className={`container mx-auto transition-all duration-700 ${isScrolled ? 'px-0' : ''}`}>
@@ -65,7 +67,7 @@ export function Header() {
                 <img
                   src="/vppalogo.svg"
                   alt="VPPA"
-                  className={`w-auto mx-auto transition-all duration-700 ${isHomePage ? 'invert' : ''} ${isScrolled ? 'h-8' : 'h-10 md:h-12'}`} />
+                  className={`w-auto mx-auto transition-all duration-700 ${isScrolled ? 'h-10' : 'h-12 md:h-14'}`} />
               </Link>
 
               {/* Right Icons */}

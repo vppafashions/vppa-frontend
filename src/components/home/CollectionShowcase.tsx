@@ -47,7 +47,7 @@ export function CollectionShowcase() {
   };
 
   return (
-    <div className="w-full bg-background">
+    <div id="collections" className="w-full bg-background scroll-mt-20">
       <section className="min-h-screen flex flex-col md:flex-row w-full border-b border-border/30">
         <div className="w-full md:w-[60%] h-[60vh] md:h-screen relative overflow-hidden group">
           <CollectionImage src={velocity.image} alt={velocity.name} />
