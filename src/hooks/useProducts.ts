@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import type { Product } from '../data/products';
 
-const API_ROOT = import.meta.env.VITE_API_BASE || '';
+const API_ROOT =
+  import.meta.env.VITE_API_BASE ||
+  (import.meta.env.DEV ? '' : 'https://vppafashions.com');
 const API_BASE = `${API_ROOT}/api/products`;
 
 const cache: Record<string, { data: Product[]; timestamp: number }> = {};
