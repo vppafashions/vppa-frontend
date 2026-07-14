@@ -7,11 +7,8 @@ export function Footer() {
       <div className="container mx-auto px-4 md:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           <div className="md:col-span-1">
-            <Link
-              to="/"
-              className="font-magazine text-5xl font-light tracking-tight block mb-6">
-              
-              VPPA
+            <Link to="/" className="block mb-6">
+              <img src="/vppalogo.svg" alt="VPPA" className="h-12 w-auto invert" />
             </Link>
             <p className="text-sm text-gray-400 leading-relaxed max-w-xs mb-6">
               Redefining presence through uncompromising quality and fearless

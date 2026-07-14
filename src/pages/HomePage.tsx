@@ -14,7 +14,7 @@ export function HomePage() {
         <div className="container mx-auto max-w-5xl text-center">
           <h2 className="font-magazine italic text-4xl md:text-6xl lg:text-7xl leading-tight md:leading-tight lg:leading-tight font-light text-foreground mb-12">
             "We don't follow trends. We set the standard. Every stitch, every
-            fabric, every silhouette — crafted for men who lead, not follow."
+            fabric, every silhouette — crafted for women and men who lead, not follow."
           </h2>
           <div className="flex items-center justify-center gap-4">
             <div className="w-8 h-px bg-primary"></div>

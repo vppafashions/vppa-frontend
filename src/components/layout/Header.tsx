@@ -61,9 +61,11 @@ export function Header() {
               {/* Logo */}
               <Link
                 to="/"
-                className={`font-magazine font-light tracking-tight text-center flex-1 md:flex-none transition-all duration-700 ${isScrolled ? 'text-2xl' : 'text-4xl'}`}>
-                
-                VPPA
+                className="text-center flex-1 md:flex-none transition-all duration-700">
+                <img
+                  src="/vppalogo.svg"
+                  alt="VPPA"
+                  className={`w-auto mx-auto transition-all duration-700 ${isHomePage ? 'invert' : ''} ${isScrolled ? 'h-8' : 'h-10 md:h-12'}`} />
               </Link>
 
               {/* Right Icons */}
@@ -102,7 +104,7 @@ export function Header() {
       {isMobileMenuOpen &&
       <div className="fixed inset-0 bg-background z-50 flex flex-col text-foreground">
           <div className="flex items-center justify-between p-6 border-b border-border/20">
-            <span className="font-magazine text-2xl tracking-tight">VPPA</span>
+            <img src="/vppalogo.svg" alt="VPPA" className="h-8 w-auto" />
             <button
             onClick={() => setIsMobileMenuOpen(false)}
             className="p-2"

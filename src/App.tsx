@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
+import { GenderProvider } from './context/GenderContext';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { CartDrawer } from './components/cart/CartDrawer';
@@ -10,7 +11,8 @@ import { ProductPage } from './pages/ProductPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { ThankYouPage } from './pages/ThankYouPage';
 export function App() {
-  return <CartProvider>
+  return <GenderProvider>
+    <CartProvider>
       <Router>
         <div className="min-h-screen flex flex-col font-sans text-foreground bg-background selection:bg-primary selection:text-primary-foreground">
           <Header />
@@ -27,5 +29,6 @@ export function App() {
           <Footer />
         </div>
       </Router>
-    </CartProvider>;
+    </CartProvider>
+  </GenderProvider>;
 }

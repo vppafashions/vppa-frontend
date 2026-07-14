@@ -1,35 +1,57 @@
 import React, { useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowDownIcon, ArrowRightIcon } from 'lucide-react';
-import { collections } from '../data/collections';
-import { products } from '../data/products';
+import { collections, getGenderedCollection } from '../data/collections';
 import { ProductCard } from '../components/products/ProductCard';
+import { useProducts } from '../hooks/useProducts';
+import { useGender } from '../context/GenderContext';
+
 export function CollectionPage() {
-  const { slug } = useParams<{
-    slug: string;
-  }>();
+  const { slug } = useParams<{ slug: string }>();
   const contentRef = useRef<HTMLDivElement>(null);
+  const { gender } = useGender();
   const collectionIndex = collections.findIndex((c) => c.slug === slug);
-  const collection = collections[collectionIndex];
-  const collectionProducts = products.filter((p) => p.collectionSlug === slug);
-  // Determine next collection for the teaser
+  const collection =
+    collectionIndex >= 0
+      ? getGenderedCollection(collections[collectionIndex], gender)
+      : undefined;
+
+  const { products: collectionProducts, loading } = useProducts({
+    collection: slug,
+    gender,
+  });
+
+  const heroImage = collectionProducts[0]?.images?.[0] || collection?.image;
   const nextCollectionIndex = (collectionIndex + 1) % collections.length;
-  const nextCollection = collections[nextCollectionIndex];
+  const nextCollection = getGenderedCollection(collections[nextCollectionIndex], gender);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [slug]);
-  const scrollToContent = () => {
-    contentRef.current?.scrollIntoView({
-      behavior: 'smooth'
-    });
-  };
-  if (!collection) {
-    return (
-      <div className="pt-32 text-center h-screen">Collection not found</div>);
 
+  const scrollToContent = () => {
+    contentRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  if (!collection) {
+    return <div className="pt-32 text-center h-screen">Collection not found</div>;
   }
-  // Get collection-specific quote
+
   const getCollectionQuote = () => {
+    if (gender === 'women') {
+      switch (slug) {
+        case 'velocity':
+          return 'Crafted for women who move with purpose. Every drape designed for effortless grace in motion.';
+        case 'presence':
+          return 'Timeless elegance woven into every thread. Sarees that speak of heritage and quiet sophistication.';
+        case 'power':
+          return 'Where boldness meets beauty. Ethnic wear that celebrates the strength within every woman.';
+        case 'attitude':
+          return 'Style is not about fitting in. It is about celebrating your unique expression with fearless confidence.';
+        default:
+          return 'Redefining modern elegance through uncompromising quality and fearless expression.';
+      }
+    }
     switch (slug) {
       case 'velocity':
         return 'Built for those who never stand still. Every thread engineered for the relentless pursuit of momentum.';
@@ -43,19 +65,23 @@ export function CollectionPage() {
         return 'Redefining modern masculinity through uncompromising quality and fearless expression.';
     }
   };
+
   const [heroProduct, ...remainingProducts] = collectionProducts;
+
   return (
     <main className="bg-background">
-      {/* 1. Cinematic Hero */}
       <div className="relative h-screen w-full overflow-hidden bg-black">
-        <div className="absolute inset-0">
-          <img
-            src={collection.image}
-            alt={collection.name}
-            className="w-full h-full object-cover object-center opacity-80" />
-          
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-        </div>
+        {heroImage ? (
+          <div className="absolute inset-0">
+            <img
+              src={heroImage}
+              alt={collection.name}
+              className="w-full h-full object-cover object-center opacity-80" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+          </div>
+        ) : (
+          <div className="absolute inset-0 bg-accent/20 animate-pulse" />
+        )}
 
         <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center justify-end text-white px-4 pb-16 md:pb-24 text-center">
           <span className="text-xs tracking-[0.4em] uppercase text-primary mb-6">
@@ -66,37 +92,27 @@ export function CollectionPage() {
           </h1>
           <p
             className="text-white/70 font-light max-w-2xl mb-16 text-sm md:text-base leading-relaxed animate-fade-in-up"
-            style={{
-              animationDelay: '200ms'
-            }}>
-            
+            style={{ animationDelay: '200ms' }}>
             {collection.description}
           </p>
 
           <button
             onClick={scrollToContent}
             className="flex flex-col items-center gap-4 group animate-fade-in-up"
-            style={{
-              animationDelay: '400ms'
-            }}
+            style={{ animationDelay: '400ms' }}
             aria-label="Scroll to content">
-            
             <span className="text-[10px] tracking-[0.3em] uppercase text-white/60 group-hover:text-white transition-colors">
               Explore the Collection
             </span>
-            <ArrowDownIcon
-              className="w-5 h-5 text-primary animate-bounce"
-              strokeWidth={1} />
-            
+            <ArrowDownIcon className="w-5 h-5 text-primary animate-bounce" strokeWidth={1} />
           </button>
         </div>
       </div>
 
       <div ref={contentRef}>
-        {/* 2. Collection Story Section */}
         <section className="py-32 md:py-48 px-4 border-b border-border/30">
           <div className="container mx-auto max-w-5xl text-center">
-            <h2 className="font-magazine italic text-4xl md:text-5xl lg:text-6xl leading-tight md:leading-tight lg:leading-tight font-light text-foreground mb-12">
+            <h2 className="font-magazine italic text-4xl md:text-5xl lg:text-6xl leading-tight font-light text-foreground mb-12">
               "{getCollectionQuote()}"
             </h2>
             <div className="flex items-center justify-center gap-4">
@@ -109,19 +125,14 @@ export function CollectionPage() {
           </div>
         </section>
 
-        {/* 3. Hero Product Feature */}
-        {heroProduct &&
-        <section className="min-h-screen flex flex-col md:flex-row w-full border-b border-border/30">
+        {heroProduct && (
+          <section className="min-h-screen flex flex-col md:flex-row w-full border-b border-border/30">
             <div className="w-full md:w-[60%] h-[60vh] md:h-screen relative overflow-hidden group">
-              <Link
-              to={`/product/${heroProduct.id}`}
-              className="block w-full h-full">
-              
+              <Link to={`/product/${heroProduct.id}`} className="block w-full h-full">
                 <img
-                src={heroProduct.images[0]}
-                alt={heroProduct.name}
-                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
-              
+                  src={heroProduct.images[0]}
+                  alt={heroProduct.name}
+                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </Link>
             </div>
@@ -139,27 +150,24 @@ export function CollectionPage() {
                 ₹{heroProduct.price.toLocaleString('en-IN')}
               </p>
               <p className="text-muted-foreground leading-relaxed mb-12 font-light text-lg">
-                {heroProduct.description}
+                {heroProduct.description.replace(/<[^>]+>/g, '')}
               </p>
               <Link
-              to={`/product/${heroProduct.id}`}
-              className="inline-flex items-center gap-4 text-sm tracking-[0.2em] uppercase group/link w-fit">
-              
+                to={`/product/${heroProduct.id}`}
+                className="inline-flex items-center gap-4 text-sm tracking-[0.2em] uppercase group/link w-fit">
                 <span className="border-b border-foreground pb-1 group-hover/link:border-primary transition-colors">
                   View Details
                 </span>
                 <ArrowRightIcon
-                className="w-4 h-4 group-hover/link:translate-x-2 transition-transform text-primary"
-                strokeWidth={1} />
-              
+                  className="w-4 h-4 group-hover/link:translate-x-2 transition-transform text-primary"
+                  strokeWidth={1} />
               </Link>
             </div>
           </section>
-        }
+        )}
 
-        {/* 4. Product Grid */}
-        {remainingProducts.length > 0 &&
-        <section className="py-32 bg-background">
+        {remainingProducts.length > 0 && (
+          <section className="py-32 bg-background">
             <div className="container mx-auto px-4 md:px-8">
               <div className="flex flex-col items-center text-center mb-20">
                 <h2 className="font-magazine italic text-5xl md:text-6xl mb-6 font-light">
@@ -168,38 +176,52 @@ export function CollectionPage() {
                 <div className="flex items-center gap-4 mb-8">
                   <div className="w-8 h-px bg-border"></div>
                   <span className="text-xs tracking-[0.4em] uppercase text-muted-foreground">
-                    {remainingProducts.length + 1} Pieces
+                    {collectionProducts.length} Pieces
                   </span>
                   <div className="w-8 h-px bg-border"></div>
                 </div>
                 <div className="w-1 h-1 rotate-45 bg-primary"></div>
               </div>
 
-              {/* Minimal Filter Bar */}
               <div className="flex justify-between items-center mb-12 pb-6 border-b border-border/30">
                 <div className="text-xs text-muted-foreground uppercase tracking-[0.2em]">
                   Showing {remainingProducts.length} items
                 </div>
               </div>
 
-              {/* Asymmetric Magazine Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
-                {remainingProducts.map((product, index) =>
-              <div
-                key={product.id}
-                className={`${remainingProducts.length === 3 && index === 0 ? 'md:col-span-2 lg:col-span-2' : ''}`}>
-                
+                {remainingProducts.map((product, index) => (
+                  <div
+                    key={product.id}
+                    className={`${remainingProducts.length === 3 && index === 0 ? 'md:col-span-2 lg:col-span-2' : ''}`}>
                     <ProductCard product={product} />
                   </div>
-              )}
+                ))}
               </div>
             </div>
           </section>
-        }
+        )}
 
-        {/* 5. Next Collection Teaser */}
-        {nextCollection &&
-        <section className="py-32 md:py-40 bg-[#0a0a0a] text-white text-center px-4 border-t border-white/10">
+        {loading && collectionProducts.length === 0 && (
+          <section className="py-32 bg-background">
+            <div className="container mx-auto px-4 md:px-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="aspect-square bg-accent/10 animate-pulse" />
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {!loading && collectionProducts.length === 0 && (
+          <section className="py-32 bg-background text-center">
+            <p className="text-muted-foreground">No products in this collection yet.</p>
+          </section>
+        )}
+
+        {nextCollection && (
+          <section className="py-32 md:py-40 bg-[#0a0a0a] text-white text-center px-4 border-t border-white/10">
             <div className="container mx-auto max-w-4xl flex flex-col items-center">
               <span className="text-xs tracking-[0.4em] uppercase text-primary mb-8">
                 Continue the Story
@@ -211,21 +233,18 @@ export function CollectionPage() {
                 {nextCollection.tagline}
               </p>
               <Link
-              to={`/collection/${nextCollection.slug}`}
-              className="inline-flex items-center gap-4 text-sm tracking-[0.2em] uppercase group/link w-fit text-white">
-              
+                to={`/collection/${nextCollection.slug}`}
+                className="inline-flex items-center gap-4 text-sm tracking-[0.2em] uppercase group/link w-fit text-white">
                 <span className="border-b border-white/50 pb-1 group-hover/link:border-primary transition-colors">
                   Discover Chapter
                 </span>
                 <ArrowRightIcon
-                className="w-4 h-4 group-hover/link:translate-x-2 transition-transform text-primary"
-                strokeWidth={1} />
-              
+                  className="w-4 h-4 group-hover/link:translate-x-2 transition-transform text-primary"
+                  strokeWidth={1} />
               </Link>
             </div>
           </section>
-        }
+        )}
       </div>
     </main>);
-
 }

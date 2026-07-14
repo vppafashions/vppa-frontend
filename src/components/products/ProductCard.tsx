@@ -1,12 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Product } from '../../data/products';
+import { getProductUrl } from '../../hooks/useProducts';
 interface ProductCardProps {
   product: Product;
 }
 export function ProductCard({ product }: ProductCardProps) {
   return (
-    <Link to={`/product/${product.id}`} className="group block">
+    <Link to={getProductUrl(product)} className="group block">
       <div className="relative aspect-square overflow-hidden bg-accent/20 mb-4">
         <img
           src={product.images[0]}
