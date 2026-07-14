@@ -72,7 +72,7 @@ export function Header() {
               <Link
                 to="/"
                 className="text-center flex-1 md:flex-none">
-                <img src="/vppalogo.svg" alt="VPPA" className="h-20 w-auto mx-auto brightness-0" />
+                <img src="/vppalogo.svg" alt="VPPA" className="h-24 w-auto mx-auto brightness-0" />
               </Link>
 
               {/* Right Icons */}

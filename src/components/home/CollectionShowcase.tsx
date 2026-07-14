@@ -80,7 +80,7 @@ export function CollectionShowcase() {
     image: useCollectionHeroImage('attitude', gender, attitudeBase.image),
   };
   return (
-    <div className="w-full bg-background">
+    <div id="collections" className="w-full bg-background scroll-mt-20">
       <ChapterSection chapterLabel="Chapter 01" collection={velocity} />
       <ChapterDivider />
       <ChapterSection chapterLabel="Chapter 02" collection={presence} />
