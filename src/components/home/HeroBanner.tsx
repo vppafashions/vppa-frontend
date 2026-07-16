@@ -4,15 +4,13 @@ import { ArrowDownIcon, ArrowUpRightIcon } from 'lucide-react';
 import { useGender } from '../../context/GenderContext';
 import { useProducts } from '../../hooks/useProducts';
 import type { Product } from '../../data/products';
-import { collections, womenOverrides } from '../../data/collections';
+import { collections } from '../../data/collections';
 import { optimizeCloudinaryUrl } from '../../lib/cloudinary';
 
 const HERO_W = 900;
 const SIDE_W = 520;
-/** How long each look group stays on screen */
+/** How long each category stays on screen */
 const ROTATE_MS = 5200;
-/** Stagger so women/men don't swap at the same instant */
-const MEN_OFFSET_MS = 2600;
 const HERO_CATEGORIES = ['velocity', 'presence', 'power', 'attitude'] as const;
 
 interface ProductLook {
@@ -54,34 +52,15 @@ function collectDistinctLooks(products: Product[], max: number): ProductLook[] {
 
 function buildCategoryLooks(
   products: Product[],
-  gender: 'men' | 'women',
   collectionSlug: string,
   count: number
 ): ProductLook[] {
-  const collection = collections.find((item) => item.slug === collectionSlug);
   const activeProducts = products.filter((product) => {
     const slug = product.collectionSlug.replace(/_men$|_women$/, '');
     return slug === collectionSlug;
   });
-  const fromApi = collectDistinctLooks(activeProducts, count);
-  if (fromApi.length >= count) return fromApi;
 
-  const fallbackImage =
-    gender === 'women'
-      ? womenOverrides[collectionSlug]?.image
-      : collection?.image;
-
-  if (!fallbackImage || !collection) return fromApi;
-
-  return [
-    ...fromApi,
-    {
-      id: `collection-${gender}-${collectionSlug}`,
-      image: fallbackImage,
-      name: collection.name,
-      href: `/collection/${collectionSlug}`,
-    },
-  ].slice(0, count);
+  return collectDistinctLooks(activeProducts, count);
 }
 
 /** Slice flat looks into rotating pairs (main + side). */
@@ -234,7 +213,16 @@ function HeroPanel({
             />
           </div>
         ) : (
-          <div className="absolute inset-0 animate-pulse bg-white/[0.04]" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/[0.04] px-8 text-center">
+            <span className="h-px w-10 bg-primary/60" />
+            <p className="font-magazine text-3xl font-light italic text-white/75 sm:text-4xl">
+              “Every stitch carries a story.”
+            </p>
+            <p className="text-[10px] uppercase tracking-[0.32em] text-white/40">
+              Your next look is on its way
+            </p>
+            <span className="h-px w-10 bg-primary/60" />
+          </div>
         )}
       </div>
 
@@ -366,11 +354,11 @@ export function HeroBanner() {
   });
 
   const womenGroups = useMemo(
-    () => chunkIntoGroups(buildCategoryLooks(womenProducts, 'women', activeCategorySlug, 12)),
+    () => chunkIntoGroups(buildCategoryLooks(womenProducts, activeCategorySlug, 12)),
     [activeCategorySlug, womenProducts]
   );
   const menGroups = useMemo(
-    () => chunkIntoGroups(buildCategoryLooks(menProducts, 'men', activeCategorySlug, 12)),
+    () => chunkIntoGroups(buildCategoryLooks(menProducts, activeCategorySlug, 12)),
     [activeCategorySlug, menProducts]
   );
 
