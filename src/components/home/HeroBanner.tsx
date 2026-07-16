@@ -13,6 +13,7 @@ const SIDE_W = 520;
 const ROTATE_MS = 5200;
 /** Stagger so women/men don't swap at the same instant */
 const MEN_OFFSET_MS = 2600;
+const HERO_CATEGORIES = ['velocity', 'presence', 'power', 'attitude'] as const;
 
 interface ProductLook {
   id: string;
@@ -51,41 +52,36 @@ function collectDistinctLooks(products: Product[], max: number): ProductLook[] {
   return looks;
 }
 
-function buildGenderLooks(
+function buildCategoryLooks(
   products: Product[],
   gender: 'men' | 'women',
+  collectionSlug: string,
   count: number
 ): ProductLook[] {
-  const fromApi = collectDistinctLooks(products, count);
+  const collection = collections.find((item) => item.slug === collectionSlug);
+  const activeProducts = products.filter((product) => {
+    const slug = product.collectionSlug.replace(/_men$|_women$/, '');
+    return slug === collectionSlug;
+  });
+  const fromApi = collectDistinctLooks(activeProducts, count);
   if (fromApi.length >= count) return fromApi;
 
-  const fallbacks =
+  const fallbackImage =
     gender === 'women'
-      ? Object.entries(womenOverrides).map(([slug, o]) => ({
-          id: `collection-${slug}`,
-          image: o.image,
-          name: collections.find((c) => c.slug === slug)?.name || slug,
-          href: `/collection/${slug}`,
-        }))
-      : collections
-          .map((c) => ({
-            id: `collection-men-${c.slug}`,
-            image: c.image || womenOverrides[c.slug]?.image || '',
-            name: c.name,
-            href: `/collection/${c.slug}`,
-          }))
-          .filter((l) => l.image);
+      ? womenOverrides[collectionSlug]?.image
+      : collection?.image;
 
-  const seen = new Set(fromApi.map((l) => l.id));
-  const padded = [...fromApi];
-  for (const look of fallbacks) {
-    if (padded.length >= count) break;
-    if (!seen.has(look.id) && look.image) {
-      seen.add(look.id);
-      padded.push(look);
-    }
-  }
-  return padded.slice(0, count);
+  if (!fallbackImage || !collection) return fromApi;
+
+  return [
+    ...fromApi,
+    {
+      id: `collection-${gender}-${collectionSlug}`,
+      image: fallbackImage,
+      name: collection.name,
+      href: `/collection/${collectionSlug}`,
+    },
+  ].slice(0, count);
 }
 
 /** Slice flat looks into rotating pairs (main + side). */
@@ -348,56 +344,38 @@ function HeroPanel({
 
 export function HeroBanner() {
   const { setGender } = useGender();
+  const [paused, setPaused] = useState(false);
+  const { index: categoryIndex, goTo: goToCategory } = useRotatingIndex(
+    HERO_CATEGORIES.length,
+    ROTATE_MS,
+    paused
+  );
+  const activeCategorySlug = HERO_CATEGORIES[categoryIndex];
+  const activeCategory = collections.find((collection) => collection.slug === activeCategorySlug);
+  const activeCategoryName = activeCategory?.name || 'Presence';
+  const activeCategoryRoute = `/collection/${activeCategorySlug}`;
   const { products: womenProducts, loading: womenLoading } = useProducts({
+    collection: activeCategorySlug,
     gender: 'women',
     limit: 16,
   });
   const { products: menProducts, loading: menLoading } = useProducts({
+    collection: activeCategorySlug,
     gender: 'men',
     limit: 16,
   });
 
   const womenGroups = useMemo(
-    () => chunkIntoGroups(buildGenderLooks(womenProducts, 'women', 12)),
-    [womenProducts]
+    () => chunkIntoGroups(buildCategoryLooks(womenProducts, 'women', activeCategorySlug, 12)),
+    [activeCategorySlug, womenProducts]
   );
   const menGroups = useMemo(
-    () => chunkIntoGroups(buildGenderLooks(menProducts, 'men', 12)),
-    [menProducts]
+    () => chunkIntoGroups(buildCategoryLooks(menProducts, 'men', activeCategorySlug, 12)),
+    [activeCategorySlug, menProducts]
   );
 
-  const [womenPaused, setWomenPaused] = useState(false);
-  const [menPaused, setMenPaused] = useState(false);
-
-  const { index: womenIndex, goTo: goWomen } = useRotatingIndex(
-    womenGroups.length,
-    ROTATE_MS,
-    womenPaused,
-    0
-  );
-  const { index: menIndex, goTo: goMen } = useRotatingIndex(
-    menGroups.length,
-    ROTATE_MS,
-    menPaused,
-    MEN_OFFSET_MS
-  );
-
-  const womenGroup = womenGroups[womenIndex] || womenGroups[0];
-  const menGroup = menGroups[menIndex] || menGroups[0];
-
-  useEffect(() => {
-    const nextW = womenGroups[(womenIndex + 1) % Math.max(womenGroups.length, 1)];
-    const nextM = menGroups[(menIndex + 1) % Math.max(menGroups.length, 1)];
-    [nextW?.main, nextW?.side, nextM?.main, nextM?.side].forEach((look) => {
-      if (!look?.image) return;
-      const img = new Image();
-      img.src = optimizeCloudinaryUrl(
-        look.image,
-        look === nextW?.side || look === nextM?.side ? SIDE_W : HERO_W
-      );
-    });
-  }, [womenIndex, menIndex, womenGroups, menGroups]);
-
+  const womenGroup = womenGroups[0];
+  const menGroup = menGroups[0];
   const loading =
     (womenLoading || menLoading) && !womenGroups[0] && !menGroups[0];
 
@@ -441,11 +419,8 @@ export function HeroBanner() {
 
       <div className="relative z-30 mx-auto max-w-4xl px-5 pb-6 pt-8 text-center sm:px-8 md:pointer-events-none md:absolute md:left-1/2 md:top-[40%] md:-translate-x-1/2 md:-translate-y-1/2 md:pb-0 md:pt-0">
         <div className="hero-fade-up md:rounded-sm md:border md:border-primary/25 md:bg-[#0a1228]/70 md:px-10 md:py-9 md:shadow-[0_30px_80px_rgba(6,11,24,0.65)] md:backdrop-blur-xl md:ring-1 md:ring-primary/20">
-          <p className="mb-4 text-[10px] font-medium uppercase tracking-[0.5em] text-primary md:mb-5">
-            Wear Your
-          </p>
           <h1 className="font-magazine text-[4.25rem] font-light italic leading-[0.82] tracking-tight text-white sm:text-7xl md:text-8xl lg:text-[7rem]">
-            Presence
+            VPPA
           </h1>
           <div className="mx-auto mt-5 flex max-w-md items-center gap-4 md:mt-6">
             <span className="h-px flex-1 bg-gradient-to-r from-transparent to-primary/60" />
@@ -467,31 +442,31 @@ export function HeroBanner() {
       >
         <HeroPanel
           group={womenGroup}
-          groupIndex={womenIndex}
-          groupCount={womenGroups.length}
-          onSelectGroup={goWomen}
+          groupIndex={categoryIndex}
+          groupCount={HERO_CATEGORIES.length}
+          onSelectGroup={goToCategory}
           label="For Her"
-          sublabel="Presence"
+          sublabel={activeCategoryName}
           cta="Shop Women"
-          to="/collection/presence"
+          to={activeCategoryRoute}
           onNavigate={() => setGender('women')}
           align="left"
           delayClass="hero-fade-up hero-delay-1"
-          onHoverChange={setWomenPaused}
+          onHoverChange={setPaused}
         />
         <HeroPanel
           group={menGroup}
-          groupIndex={menIndex}
-          groupCount={menGroups.length}
-          onSelectGroup={goMen}
+          groupIndex={categoryIndex}
+          groupCount={HERO_CATEGORIES.length}
+          onSelectGroup={goToCategory}
           label="For Him"
-          sublabel="Attitude"
+          sublabel={activeCategoryName}
           cta="Shop Men"
-          to="/collection/attitude"
+          to={activeCategoryRoute}
           onNavigate={() => setGender('men')}
           align="right"
           delayClass="hero-fade-up hero-delay-2"
-          onHoverChange={setMenPaused}
+          onHoverChange={setPaused}
         />
       </div>
 
