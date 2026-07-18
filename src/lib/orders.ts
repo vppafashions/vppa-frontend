@@ -13,6 +13,10 @@ export interface OrderData {
   trackingNumber?: string;
   courier?: string;
   statusTimeline?: string;
+  /** Applied checkout coupon code, if any */
+  couponCode?: string;
+  /** Inclusive bill discount amount from coupon (INR) */
+  discount?: number;
 }
 
 export interface StatusTimeline {

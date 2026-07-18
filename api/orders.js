@@ -30,7 +30,21 @@ export default async function handler(req, res) {
 
     // POST /api/orders — create order
     if (req.method === 'POST') {
-      const { customerName, email, phone, address, items, total, status, notes, userId, razorpayPaymentId, razorpayOrderId } = req.body;
+      const {
+        customerName,
+        email,
+        phone,
+        address,
+        items,
+        total,
+        status,
+        notes,
+        userId,
+        razorpayPaymentId,
+        razorpayOrderId,
+        couponCode,
+        discount,
+      } = req.body;
 
       if (!customerName || !email) return res.status(400).json({ error: 'customerName and email required' });
 
@@ -46,6 +60,11 @@ export default async function handler(req, res) {
       if (userId) payload.userId = userId;
       if (razorpayPaymentId) payload.razorpayPaymentId = razorpayPaymentId;
       if (razorpayOrderId) payload.razorpayOrderId = razorpayOrderId;
+      if (couponCode !== undefined && couponCode !== null) payload.couponCode = String(couponCode);
+      if (discount !== undefined && discount !== null) {
+        const discountValue = Number(discount);
+        payload.discount = Number.isFinite(discountValue) && discountValue > 0 ? discountValue : 0;
+      }
 
       const permissions = userId
         ? [`read("user:${userId}")`, `update("user:${userId}")`]
@@ -106,6 +125,11 @@ export default async function handler(req, res) {
             })
             .join('\r\n');
 
+          const discountLine =
+            doc.discount > 0
+              ? `Discount${doc.couponCode ? ` (${doc.couponCode})` : ''}: -Rs.${Number(doc.discount).toLocaleString('en-IN')}`
+              : '';
+
           const adminText = [
             `New order #${shortId}`,
             '',
@@ -117,11 +141,14 @@ export default async function handler(req, res) {
             'Items:',
             adminItemLines || '- (none)',
             '',
+            discountLine,
             `Total: ${totalStr}`,
             paymentLine,
             '',
             'Manage in backoffice: https://backoffice.vppafashions.com/dashboard/orders',
-          ].join('\r\n');
+          ]
+            .filter(Boolean)
+            .join('\r\n');
 
           // Send plain text admin + customer emails in parallel.
 
@@ -175,21 +202,46 @@ export default async function handler(req, res) {
         const invoiceItems = parsedItems.map((item) => {
           const rate = item.price;
           const quantity = item.quantity || 1;
-          const total = rate * quantity;
-          const taxableValue = Math.round((total / (1 + DEFAULT_GST_RATE / 100)) * 100) / 100;
-          const totalItemTax = Math.round((total - taxableValue) * 100) / 100;
+          const lineTotal = rate * quantity;
+          const taxableValue = Math.round((lineTotal / (1 + DEFAULT_GST_RATE / 100)) * 100) / 100;
+          const totalItemTax = Math.round((lineTotal - taxableValue) * 100) / 100;
           const cgst = Math.round((totalItemTax / 2) * 100) / 100;
           const sgst = Math.round((totalItemTax - cgst) * 100) / 100;
           const name = `${item.name}${item.size ? ` (${item.size})` : ''}${item.color ? ` - ${item.color}` : ''}`;
-          return { name, quantity, rate, originalRate: rate, hsn: DEFAULT_HSN_CODE, gstPercent: DEFAULT_GST_RATE, cgstPercent: DEFAULT_CGST_RATE, sgstPercent: DEFAULT_SGST_RATE, taxableValue, cgst, sgst, total };
+          return { name, quantity, rate, originalRate: rate, hsn: DEFAULT_HSN_CODE, gstPercent: DEFAULT_GST_RATE, cgstPercent: DEFAULT_CGST_RATE, sgstPercent: DEFAULT_SGST_RATE, taxableValue, cgst, sgst, total: lineTotal };
         });
 
         const subtotal = invoiceItems.reduce((s, i) => s + i.total, 0);
-        const taxableAmount = Math.round(invoiceItems.reduce((s, i) => s + i.taxableValue, 0) * 100) / 100;
-        const cgstAmount = Math.round(invoiceItems.reduce((s, i) => s + i.cgst, 0) * 100) / 100;
-        const sgstAmount = Math.round(invoiceItems.reduce((s, i) => s + i.sgst, 0) * 100) / 100;
+        const storedDiscount = Number(doc.discount);
+        const inferredDiscount = Math.max(0, Math.round((subtotal - Number(doc.total || 0)) * 100) / 100);
+        const discountInr = Math.min(
+          Number.isFinite(storedDiscount) && storedDiscount > 0 ? storedDiscount : inferredDiscount,
+          subtotal,
+        );
+
+        // Pre-tax bill discount: rebuild GST on reduced inclusive totals.
+        let allocated = 0;
+        const discountedItems = discountInr > 0
+          ? invoiceItems.map((item, index) => {
+              const isLast = index === invoiceItems.length - 1;
+              const share = isLast
+                ? Math.round((discountInr - allocated) * 100) / 100
+                : Math.round((discountInr * (item.total / subtotal)) * 100) / 100;
+              if (!isLast) allocated = Math.round((allocated + share) * 100) / 100;
+              const newTotal = Math.max(0, Math.round((item.total - share) * 100) / 100);
+              const taxableValue = Math.round((newTotal / (1 + DEFAULT_GST_RATE / 100)) * 100) / 100;
+              const totalItemTax = Math.round((newTotal - taxableValue) * 100) / 100;
+              const cgst = Math.round((totalItemTax / 2) * 100) / 100;
+              const sgst = Math.round((totalItemTax - cgst) * 100) / 100;
+              return { ...item, taxableValue, cgst, sgst, total: newTotal };
+            })
+          : invoiceItems;
+
+        const taxableAmount = Math.round(discountedItems.reduce((s, i) => s + i.taxableValue, 0) * 100) / 100;
+        const cgstAmount = Math.round(discountedItems.reduce((s, i) => s + i.cgst, 0) * 100) / 100;
+        const sgstAmount = Math.round(discountedItems.reduce((s, i) => s + i.sgst, 0) * 100) / 100;
         const totalTax = Math.round((cgstAmount + sgstAmount) * 100) / 100;
-        const grandTotal = Math.round(subtotal * 100) / 100;
+        const grandTotal = Math.round((subtotal - discountInr) * 100) / 100;
 
         // Get next ECOM invoice number
         const ECOM_PREFIX = 'ECOM-';
@@ -226,7 +278,8 @@ export default async function handler(req, res) {
           sgstAmount,
           totalTax,
           shippingAmount: 0,
-          discount: 0,
+          discount: discountInr,
+          couponCode: doc.couponCode || '',
           grandTotal,
           status: 'paid',
         });

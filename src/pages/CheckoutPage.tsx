@@ -347,6 +347,8 @@ export function CheckoutPage() {
         userId: user?.$id,
         razorpayPaymentId: response.razorpay_payment_id,
         razorpayOrderId: response.razorpay_order_id,
+        couponCode: couponData?.code || '',
+        discount: discount > 0 ? discount : 0,
       });
 
       // Increment coupon usage if applied
