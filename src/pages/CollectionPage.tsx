@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowDownIcon, ArrowRightIcon } from 'lucide-react';
 import { collections, getGenderedCollection } from '../data/collections';
@@ -7,6 +7,7 @@ import { ProductCard } from '../components/products/ProductCard';
 import { useDocumentHead } from '../hooks/useDocumentHead';
 import { useProducts, getProductUrl } from '../hooks/useProducts';
 import { useGender } from '../context/GenderContext';
+import { isProductSoldOut } from '../lib/stock';
 export function CollectionPage() {
   const { slug } = useParams<{
     slug: string;
@@ -19,12 +20,18 @@ export function CollectionPage() {
   // Fetch products from Appwrite — API handles slug mapping based on gender
   const { products: apiProducts, loading } = useProducts({ collection: slug, gender });
 
-  const collectionProducts = apiProducts.length > 0
-    ? apiProducts
-    : loading ? [] : fallbackProducts.filter((p) => p.collectionSlug === slug);
-  // Use the newest product's first image as the hero, falling back to the
-  // static collection image (collections.ts) when the API has nothing yet.
-  const heroImage = apiProducts[0]?.images?.[0] || collection?.image;
+  const collectionProducts = useMemo(() => {
+    const list = apiProducts.length > 0
+      ? apiProducts
+      : loading ? [] : fallbackProducts.filter((p) => p.collectionSlug === slug);
+    // In-stock first; sold-out demoted to the end.
+    return [...list].sort((a, b) => Number(isProductSoldOut(a)) - Number(isProductSoldOut(b)));
+  }, [apiProducts, loading, slug]);
+  // Prefer an in-stock product image for the cinematic hero when available.
+  const heroImage =
+    collectionProducts.find((p) => !isProductSoldOut(p))?.images?.[0] ||
+    collectionProducts[0]?.images?.[0] ||
+    collection?.image;
   // Determine next collection for the teaser
   const nextCollectionIndex = (collectionIndex + 1) % collections.length;
   const nextCollection = getGenderedCollection(collections[nextCollectionIndex], gender);
@@ -78,7 +85,10 @@ export function CollectionPage() {
         return 'Redefining modern masculinity through uncompromising quality and fearless expression.';
     }
   };
-  const [heroProduct] = collectionProducts;
+  // Prefer an in-stock featured piece; fall back to first (possibly sold out).
+  const heroProduct =
+    collectionProducts.find((p) => !isProductSoldOut(p)) || collectionProducts[0];
+  const heroSoldOut = heroProduct ? isProductSoldOut(heroProduct) : false;
   // Show every product in the grid (including the featured hero) so the count
   // matches the backoffice exactly and avoids any "missing item" confusion.
   const gridProducts = collectionProducts;
@@ -177,11 +187,16 @@ export function CollectionPage() {
               <h3 className="font-magazine italic text-3xl md:text-6xl mb-3 md:mb-6 font-light leading-none">
                 {heroProduct.name}
               </h3>
-              <p className="text-xl md:text-2xl font-light mb-4 md:mb-8">
+              <p className="text-xl md:text-2xl font-light mb-2">
                 ₹{heroProduct.price.toLocaleString('en-IN')}
               </p>
+              {heroSoldOut && (
+                <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
+                  Sold Out
+                </p>
+              )}
               <div
-                className="text-muted-foreground leading-relaxed mb-6 md:mb-12 font-light text-sm md:text-lg line-clamp-3 md:line-clamp-4"
+                className="text-muted-foreground leading-relaxed mb-6 md:mb-12 mt-2 md:mt-6 font-light text-sm md:text-lg line-clamp-3 md:line-clamp-4"
                 dangerouslySetInnerHTML={{ __html: heroProduct.description }}
               />
               <Link
@@ -189,7 +204,7 @@ export function CollectionPage() {
               className="inline-flex items-center gap-4 text-sm tracking-[0.2em] uppercase group/link w-fit">
               
                 <span className="border-b border-foreground pb-1 group-hover/link:border-primary transition-colors">
-                  View Details
+                  {heroSoldOut ? 'View details — sold out' : 'View Details'}
                 </span>
                 <ArrowRightIcon
                 className="w-4 h-4 group-hover/link:translate-x-2 transition-transform text-primary"

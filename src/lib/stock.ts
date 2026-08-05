@@ -11,7 +11,28 @@ export interface StockInfo {
   variantInventory?: VariantInventoryItem[];
 }
 
+/** Minimal product shape needed for gallery / PDP sold-out checks. */
+export interface ProductStockFields {
+  inStock?: boolean;
+  stockQuantity?: number;
+  variantInventory?: VariantInventoryItem[];
+}
+
 const API_BASE = import.meta.env.VITE_API_BASE || '';
+
+/**
+ * True when the product has no purchasable stock left.
+ * Uses product-level inStock, or all-zero variantInventory when present.
+ */
+export function isProductSoldOut(product: ProductStockFields | null | undefined): boolean {
+  if (!product) return false;
+  if (product.inStock === false) return true;
+  const variants = product.variantInventory;
+  if (variants && variants.length > 0) {
+    return variants.every((v) => v.stock <= 0);
+  }
+  return false;
+}
 
 /**
  * Check stock availability for a single product by its ID.
@@ -36,6 +57,44 @@ export async function checkProductStock(
     return data.results?.[0] || { productId, inStock: true, stockQuantity: 999 };
   } catch {
     return { productId, inStock: true, stockQuantity: 999 };
+  }
+}
+
+/**
+ * Batch stock check for product IDs (e.g. wishlist).
+ * Falls back to "in stock" per id if the request fails.
+ */
+export async function checkProductsStock(productIds: string[]): Promise<Map<string, StockInfo>> {
+  const map = new Map<string, StockInfo>();
+  if (productIds.length === 0) return map;
+
+  try {
+    const response = await fetch(`${API_BASE}/api/inventory?action=stock`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productIds }),
+    });
+    if (!response.ok) {
+      for (const productId of productIds) {
+        map.set(productId, { productId, inStock: true, stockQuantity: 999 });
+      }
+      return map;
+    }
+    const data = await response.json();
+    for (const result of data.results || []) {
+      map.set(result.productId, result);
+    }
+    for (const productId of productIds) {
+      if (!map.has(productId)) {
+        map.set(productId, { productId, inStock: true, stockQuantity: 999 });
+      }
+    }
+    return map;
+  } catch {
+    for (const productId of productIds) {
+      map.set(productId, { productId, inStock: true, stockQuantity: 999 });
+    }
+    return map;
   }
 }
 

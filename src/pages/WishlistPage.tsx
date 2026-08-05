@@ -1,15 +1,41 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { HeartIcon, ShoppingBagIcon, TrashIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
+import { checkProductsStock, isProductSoldOut } from '../lib/stock';
 
 export function WishlistPage() {
   const { user, loading: authLoading } = useAuth();
   const { wishlistItems, wishlistLoading, toggleWishlist } = useWishlist();
   const { addToCart } = useCart();
   const navigate = useNavigate();
+  const [soldOutIds, setSoldOutIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    let cancelled = false;
+    const ids = wishlistItems.map((item) => item.productId);
+    if (ids.length === 0) {
+      setSoldOutIds(new Set());
+      return;
+    }
+
+    checkProductsStock(ids).then((stockMap) => {
+      if (cancelled) return;
+      const next = new Set<string>();
+      for (const [productId, info] of stockMap) {
+        if (!info.inStock || isProductSoldOut(info)) {
+          next.add(productId);
+        }
+      }
+      setSoldOutIds(next);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [wishlistItems]);
 
   if (authLoading || wishlistLoading) {
     return (
@@ -62,82 +88,104 @@ export function WishlistPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {wishlistItems.map((item) => (
-              <div
-                key={item.$id}
-                className="group border border-border/30 rounded-2xl bg-card/50 backdrop-blur-sm overflow-hidden"
-              >
-                {/* Product Image */}
-                <Link to={`/product/${item.productId}`} className="block">
-                  <div className="aspect-square bg-accent/10 overflow-hidden">
-                    {item.image ? (
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-muted-foreground/30">
-                        <HeartIcon className="w-12 h-12" />
-                      </div>
-                    )}
-                  </div>
-                </Link>
-
-                {/* Product Info */}
-                <div className="p-4">
+            {wishlistItems.map((item) => {
+              const soldOut = soldOutIds.has(item.productId);
+              return (
+                <div
+                  key={item.$id}
+                  className="group border border-border/30 rounded-2xl bg-card/50 backdrop-blur-sm overflow-hidden"
+                >
+                  {/* Product Image */}
                   <Link to={`/product/${item.productId}`} className="block">
-                    {item.collectionSlug && (
-                      <p className="text-xs uppercase tracking-widest text-primary mb-1">
-                        {item.collectionSlug}
-                      </p>
-                    )}
-                    <h3 className="font-serif text-lg mb-1 group-hover:text-primary transition-colors">
-                      {item.name}
-                    </h3>
-                    <p className="text-lg font-light">
-                      ₹{item.price.toLocaleString('en-IN')}
-                    </p>
+                    <div className="relative aspect-square bg-accent/10 overflow-hidden">
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${
+                            soldOut ? 'opacity-60' : ''
+                          }`}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground/30">
+                          <HeartIcon className="w-12 h-12" />
+                        </div>
+                      )}
+                      {soldOut && (
+                        <span className="absolute top-3 left-3 z-10 bg-background/95 backdrop-blur-sm border border-border/50 px-2.5 py-1 text-[10px] uppercase tracking-widest text-foreground">
+                          Sold Out
+                        </span>
+                      )}
+                    </div>
                   </Link>
 
-                  {/* Actions */}
-                  <div className="flex gap-2 mt-4">
-                    <button
-                      onClick={() => {
-                        addToCart({
-                          productId: item.productId,
-                          name: item.name,
-                          price: item.price,
-                          size: '',
-                          color: '',
-                          quantity: 1,
-                          image: item.image,
-                        });
-                      }}
-                      className="flex-1 flex items-center justify-center gap-2 py-2.5 border border-foreground bg-foreground text-background text-xs uppercase tracking-widest hover:opacity-90 transition-opacity"
-                    >
-                      <ShoppingBagIcon className="w-3.5 h-3.5" />
-                      Add to Bag
-                    </button>
-                    <button
-                      onClick={() =>
-                        toggleWishlist({
-                          productId: item.productId,
-                          name: item.name,
-                          price: item.price,
-                          image: item.image,
-                          collectionSlug: item.collectionSlug,
-                        })
-                      }
-                      className="p-2.5 border border-border/30 hover:border-red-300 hover:bg-red-50 hover:text-red-500 transition-all"
-                      aria-label="Remove from wishlist"
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </button>
+                  {/* Product Info */}
+                  <div className="p-4">
+                    <Link to={`/product/${item.productId}`} className="block">
+                      {item.collectionSlug && (
+                        <p className="text-xs uppercase tracking-widest text-primary mb-1">
+                          {item.collectionSlug}
+                        </p>
+                      )}
+                      <h3 className="font-serif text-lg mb-1 group-hover:text-primary transition-colors">
+                        {item.name}
+                      </h3>
+                      <p className="text-lg font-light">
+                        ₹{item.price.toLocaleString('en-IN')}
+                      </p>
+                      {soldOut && (
+                        <p className="text-xs uppercase tracking-widest text-muted-foreground mt-1">
+                          Sold Out
+                        </p>
+                      )}
+                    </Link>
+
+                    {/* Actions */}
+                    <div className="flex gap-2 mt-4">
+                      <button
+                        type="button"
+                        disabled={soldOut}
+                        onClick={() => {
+                          if (soldOut) return;
+                          addToCart({
+                            productId: item.productId,
+                            name: item.name,
+                            price: item.price,
+                            size: '',
+                            color: '',
+                            quantity: 1,
+                            image: item.image,
+                          });
+                        }}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 border text-xs uppercase tracking-widest transition-opacity ${
+                          soldOut
+                            ? 'border-border/50 bg-muted text-muted-foreground cursor-not-allowed opacity-60'
+                            : 'border-foreground bg-foreground text-background hover:opacity-90'
+                        }`}
+                      >
+                        <ShoppingBagIcon className="w-3.5 h-3.5" />
+                        {soldOut ? 'Sold Out' : 'Add to Bag'}
+                      </button>
+                      <button
+                        onClick={() =>
+                          toggleWishlist({
+                            productId: item.productId,
+                            name: item.name,
+                            price: item.price,
+                            image: item.image,
+                            collectionSlug: item.collectionSlug,
+                          })
+                        }
+                        className="p-2.5 border border-border/30 hover:border-red-300 hover:bg-red-50 hover:text-red-500 transition-all"
+                        aria-label="Remove from wishlist"
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 

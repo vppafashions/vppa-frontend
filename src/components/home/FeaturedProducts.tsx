@@ -1,25 +1,44 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useProducts, getProductUrl } from '../../hooks/useProducts';
 import { useGender } from '../../context/GenderContext';
 import { products as fallbackProducts } from '../../data/products';
+import { isProductSoldOut } from '../../lib/stock';
+import type { Product } from '../../data/products';
+
+function pickEditProducts(allProducts: Product[], count: number): Product[] {
+  const withImages = allProducts.filter((p) => p.images && p.images.length > 0);
+  const featured = withImages.filter((p) => p.featured || p.displayOnMainPage);
+  const pool = featured.length >= count ? featured : withImages;
+  const inStock = pool.filter((p) => !isProductSoldOut(p));
+  const soldOut = pool.filter((p) => isProductSoldOut(p));
+  return [...inStock, ...soldOut].slice(0, count);
+}
+
+function SoldOutBadge() {
+  return (
+    <span className="absolute top-3 left-3 z-10 bg-background/95 backdrop-blur-sm border border-border/50 px-2.5 py-1 text-[10px] uppercase tracking-widest text-foreground">
+      Sold Out
+    </span>
+  );
+}
 
 export function FeaturedProducts() {
   const { gender } = useGender();
   const { products: apiProducts, loading } = useProducts({ gender });
 
-  // Use API products if available, fall back to static data
-  const allProducts = apiProducts.length > 0 ? apiProducts : fallbackProducts;
-
-  // Prefer featured/displayOnMainPage products, otherwise take first 4 with images
-  const featured = allProducts.filter((p) => p.featured || p.displayOnMainPage);
-  const featuredProducts = (featured.length >= 4 ? featured : allProducts.filter((p) => p.images && p.images.length > 0)).slice(0, 4);
+  const featuredProducts = useMemo(() => {
+    const allProducts = apiProducts.length > 0 ? apiProducts : fallbackProducts;
+    return pickEditProducts(allProducts, 4);
+  }, [apiProducts]);
 
   if (featuredProducts.length === 0 && !loading) return null;
 
   const [heroProduct, ...sideProducts] = featuredProducts;
 
   if (!heroProduct) return null;
+
+  const heroSoldOut = isProductSoldOut(heroProduct);
 
   return (
     <section className="py-10 md:py-32 bg-background">
@@ -55,10 +74,14 @@ export function FeaturedProducts() {
                     <img
                       src={heroProduct.images[0]}
                       alt={heroProduct.name}
-                      className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
+                      className={`w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 ${
+                        heroSoldOut ? 'opacity-60' : ''
+                      }`}
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground">No Image</div>
                   )}
+                  {heroSoldOut && <SoldOutBadge />}
                   <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 </div>
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -69,6 +92,11 @@ export function FeaturedProducts() {
                     <h3 className="font-magazine text-3xl md:text-4xl">
                       {heroProduct.name}
                     </h3>
+                    {heroSoldOut && (
+                      <p className="text-xs uppercase tracking-widest text-muted-foreground mt-2">
+                        Sold Out
+                      </p>
+                    )}
                   </div>
                   <p className="text-lg font-light">
                     ₹{heroProduct.price.toLocaleString('en-IN')}
@@ -79,32 +107,44 @@ export function FeaturedProducts() {
 
             {/* Side Column Products */}
             <div className="flex flex-col gap-6 md:gap-12">
-              {sideProducts.map((product) =>
-              <div key={product.id} className="group">
-                  <Link to={getProductUrl(product)} className="block">
-                    <div className="relative aspect-square overflow-hidden mb-4 bg-accent/10">
-                      {product.images[0] ? (
-                        <img
-                          src={product.images[0]}
-                          alt={product.name}
-                          className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No Image</div>
-                      )}
-                      <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-[10px] tracking-[0.3em] uppercase text-primary">
-                        {product.collectionSlug}
-                      </p>
-                      <h3 className="font-magazine text-2xl">{product.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        ₹{product.price.toLocaleString('en-IN')}
-                      </p>
-                    </div>
-                  </Link>
-                </div>
-              )}
+              {sideProducts.map((product) => {
+                const soldOut = isProductSoldOut(product);
+                return (
+                  <div key={product.id} className="group">
+                    <Link to={getProductUrl(product)} className="block">
+                      <div className="relative aspect-square overflow-hidden mb-4 bg-accent/10">
+                        {product.images[0] ? (
+                          <img
+                            src={product.images[0]}
+                            alt={product.name}
+                            className={`w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 ${
+                              soldOut ? 'opacity-60' : ''
+                            }`}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No Image</div>
+                        )}
+                        {soldOut && <SoldOutBadge />}
+                        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-[10px] tracking-[0.3em] uppercase text-primary">
+                          {product.collectionSlug}
+                        </p>
+                        <h3 className="font-magazine text-2xl">{product.name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          ₹{product.price.toLocaleString('en-IN')}
+                        </p>
+                        {soldOut && (
+                          <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                            Sold Out
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -117,6 +157,6 @@ export function FeaturedProducts() {
           </Link>
         </div>
       </div>
-    </section>);
-
+    </section>
+  );
 }

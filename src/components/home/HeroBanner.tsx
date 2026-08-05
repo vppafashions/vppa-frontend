@@ -6,6 +6,7 @@ import { useProducts } from '../../hooks/useProducts';
 import type { Product } from '../../data/products';
 import { collections } from '../../data/collections';
 import { optimizeCloudinaryUrl } from '../../lib/cloudinary';
+import { isProductSoldOut } from '../../lib/stock';
 
 const HERO_W = 900;
 const SIDE_W = 520;
@@ -31,8 +32,13 @@ function getProductImage(product: Product): string | undefined {
 }
 
 function collectDistinctLooks(products: Product[], max: number): ProductLook[] {
+  // Prefer in-stock products so the rotating hero doesn't spotlight empty stock.
+  const ordered = [
+    ...products.filter((p) => !isProductSoldOut(p)),
+    ...products.filter((p) => isProductSoldOut(p)),
+  ];
   const looks: ProductLook[] = [];
-  for (const product of products) {
+  for (const product of ordered) {
     const image = getProductImage(product);
     if (!image) continue;
     looks.push({

@@ -2,18 +2,30 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Product } from '../../data/products';
 import { getProductUrl } from '../../hooks/useProducts';
+import { isProductSoldOut } from '../../lib/stock';
+
 interface ProductCardProps {
   product: Product;
 }
+
 export function ProductCard({ product }: ProductCardProps) {
+  const soldOut = isProductSoldOut(product);
+
   return (
     <Link to={getProductUrl(product)} className="group block">
       <div className="relative aspect-square overflow-hidden bg-accent/20 mb-4">
         <img
           src={product.images[0]}
           alt={product.name}
-          className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
-        
+          className={`object-cover w-full h-full transition-transform duration-700 group-hover:scale-105 ${
+            soldOut ? 'opacity-60' : ''
+          }`}
+        />
+        {soldOut && (
+          <span className="absolute top-3 left-3 z-10 bg-background/95 backdrop-blur-sm border border-border/50 px-2.5 py-1 text-[10px] uppercase tracking-widest text-foreground">
+            Sold Out
+          </span>
+        )}
         <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out">
           <div className="bg-background/95 backdrop-blur-sm text-foreground text-center py-3 text-sm uppercase tracking-widest font-medium border border-border/50">
@@ -29,7 +41,12 @@ export function ProductCard({ product }: ProductCardProps) {
         <p className="text-sm text-muted-foreground">
           ₹{product.price.toLocaleString('en-IN')}
         </p>
+        {soldOut && (
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">
+            Sold Out
+          </p>
+        )}
       </div>
-    </Link>);
-
+    </Link>
+  );
 }
