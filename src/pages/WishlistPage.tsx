@@ -4,7 +4,7 @@ import { HeartIcon, ShoppingBagIcon, TrashIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
-import { checkProductsStock, isProductSoldOut } from '../lib/stock';
+import { checkProductsStock, isProductSoldOut, UNAVAILABLE_LABEL } from '../lib/stock';
 
 export function WishlistPage() {
   const { user, loading: authLoading } = useAuth();
@@ -113,7 +113,7 @@ export function WishlistPage() {
                       )}
                       {soldOut && (
                         <span className="absolute top-3 left-3 z-10 bg-background/95 backdrop-blur-sm border border-border/50 px-2.5 py-1 text-[10px] uppercase tracking-widest text-foreground">
-                          Sold Out
+                          {UNAVAILABLE_LABEL}
                         </span>
                       )}
                     </div>
@@ -135,7 +135,7 @@ export function WishlistPage() {
                       </p>
                       {soldOut && (
                         <p className="text-xs uppercase tracking-widest text-muted-foreground mt-1">
-                          Sold Out
+                          {UNAVAILABLE_LABEL}
                         </p>
                       )}
                     </Link>
@@ -164,7 +164,7 @@ export function WishlistPage() {
                         }`}
                       >
                         <ShoppingBagIcon className="w-3.5 h-3.5" />
-                        {soldOut ? 'Sold Out' : 'Add to Bag'}
+                        {soldOut ? UNAVAILABLE_LABEL : 'Add to Bag'}
                       </button>
                       <button
                         onClick={() =>

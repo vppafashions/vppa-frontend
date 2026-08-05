@@ -12,7 +12,12 @@ import { ReviewsSection } from '../components/products/ReviewsSection';
 import { StarRating } from '../components/products/StarRating';
 import { useReviews } from '../hooks/useReviews';
 import { trackViewItem } from '../lib/analytics';
-import { isProductSoldOut } from '../lib/stock';
+import {
+  isProductSoldOut,
+  UNAVAILABLE_HEADLINE,
+  UNAVAILABLE_LABEL,
+  UNAVAILABLE_WISHLIST_HINT,
+} from '../lib/stock';
 import { useDocumentHead } from '../hooks/useDocumentHead';
 import { ProductJsonLd } from '../components/seo/ProductJsonLd';
 import { BreadcrumbJsonLd } from '../components/seo/BreadcrumbJsonLd';
@@ -136,6 +141,21 @@ export function ProductPage() {
   if (!product) {
     return <div className="py-16 text-center h-screen">Product not found</div>;
   }
+  const handleToggleWishlist = () => {
+    if (!user) {
+      window.location.href = '/login';
+      return;
+    }
+    if (!product) return;
+    toggleWishlist({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.images[0],
+      collectionSlug: product.collectionSlug,
+    });
+  };
+
   const handleAddToCart = () => {
     if (isSoldOut) return;
     if (!selectedSize) {
@@ -143,7 +163,7 @@ export function ProductPage() {
       return;
     }
     if (isSelectedSizeOutOfStock) {
-      alert('This size is currently out of stock');
+      alert('This size is currently unavailable');
       return;
     }
     addToCart({
@@ -231,7 +251,7 @@ export function ProductPage() {
               </p>
               {isSoldOut && (
                 <p className="mt-3 text-sm uppercase tracking-widest text-muted-foreground">
-                  Sold out
+                  {UNAVAILABLE_HEADLINE}
                 </p>
               )}
             </div>
@@ -318,8 +338,8 @@ export function ProductPage() {
                       onClick={() => available && setSelectedSize(size)}
                       disabled={!available}
                       aria-disabled={!available}
-                      aria-label={available ? `Select size ${size}` : `Size ${size} — out of stock`}
-                      title={available ? undefined : 'Out of stock'}
+                      aria-label={available ? `Select size ${size}` : `Size ${size} — unavailable`}
+                      title={available ? undefined : UNAVAILABLE_LABEL}
                       className={`h-12 border text-sm uppercase tracking-widest transition-colors ${
                         isSelected
                           ? 'border-foreground bg-foreground text-background'
@@ -339,45 +359,44 @@ export function ProductPage() {
 
             {/* Actions */}
             <div className="mb-8 md:mb-12">
-              <div className="flex gap-4">
-                <Button
-                  onClick={handleAddToCart}
-                  disabled={!canPurchase}
-                  className={`flex-1 h-14 text-sm ${!canPurchase ? 'opacity-60 cursor-not-allowed' : ''}`}
-                  variant="primary"
-                  aria-disabled={!canPurchase}
-                >
-                  {isSoldOut || isSelectedSizeOutOfStock ? 'Sold Out' : 'Add to Bag'}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className={`h-14 w-14 flex-shrink-0 ${wishlisted ? 'bg-red-50 border-red-300 text-red-500' : ''}`}
-                  aria-label={wishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
-                  onClick={() => {
-                    if (!user) {
-                      window.location.href = '/login';
-                      return;
-                    }
-                    if (product) {
-                      toggleWishlist({
-                        productId: product.id,
-                        name: product.name,
-                        price: product.price,
-                        image: product.images[0],
-                        collectionSlug: product.collectionSlug,
-                      });
-                    }
-                  }}
-                >
-                  <HeartIcon className={`w-5 h-5 ${wishlisted ? 'fill-current' : ''}`} />
-                </Button>
-              </div>
-              {isSoldOut && (
-                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-                  This piece is currently sold out. Save it to your wishlist and
-                  we&apos;ll keep it handy for when it returns.
-                </p>
+              {isSoldOut ? (
+                <>
+                  <Button
+                    onClick={handleToggleWishlist}
+                    className="w-full h-14 text-sm"
+                    variant="primary"
+                    aria-label={wishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <HeartIcon className={`w-4 h-4 ${wishlisted ? 'fill-current' : ''}`} />
+                      {wishlisted ? 'Saved to Wishlist' : 'Save to Wishlist'}
+                    </span>
+                  </Button>
+                  <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                    {UNAVAILABLE_WISHLIST_HINT}
+                  </p>
+                </>
+              ) : (
+                <div className="flex gap-4">
+                  <Button
+                    onClick={handleAddToCart}
+                    disabled={!canPurchase}
+                    className={`flex-1 h-14 text-sm ${!canPurchase ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    variant="primary"
+                    aria-disabled={!canPurchase}
+                  >
+                    {isSelectedSizeOutOfStock ? UNAVAILABLE_LABEL : 'Add to Bag'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className={`h-14 w-14 flex-shrink-0 ${wishlisted ? 'bg-red-50 border-red-300 text-red-500' : ''}`}
+                    aria-label={wishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
+                    onClick={handleToggleWishlist}
+                  >
+                    <HeartIcon className={`w-5 h-5 ${wishlisted ? 'fill-current' : ''}`} />
+                  </Button>
+                </div>
               )}
             </div>
 

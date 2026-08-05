@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useProducts, getProductUrl } from '../../hooks/useProducts';
 import { useGender } from '../../context/GenderContext';
 import { products as fallbackProducts } from '../../data/products';
-import { isProductSoldOut } from '../../lib/stock';
+import { isProductSoldOut, UNAVAILABLE_LABEL } from '../../lib/stock';
 import type { Product } from '../../data/products';
 
 function pickEditProducts(allProducts: Product[], count: number): Product[] {
@@ -15,10 +15,10 @@ function pickEditProducts(allProducts: Product[], count: number): Product[] {
   return [...inStock, ...soldOut].slice(0, count);
 }
 
-function SoldOutBadge() {
+function UnavailableBadge() {
   return (
     <span className="absolute top-3 left-3 z-10 bg-background/95 backdrop-blur-sm border border-border/50 px-2.5 py-1 text-[10px] uppercase tracking-widest text-foreground">
-      Sold Out
+      {UNAVAILABLE_LABEL}
     </span>
   );
 }
@@ -81,7 +81,7 @@ export function FeaturedProducts() {
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground">No Image</div>
                   )}
-                  {heroSoldOut && <SoldOutBadge />}
+                  {heroSoldOut && <UnavailableBadge />}
                   <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 </div>
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -94,7 +94,7 @@ export function FeaturedProducts() {
                     </h3>
                     {heroSoldOut && (
                       <p className="text-xs uppercase tracking-widest text-muted-foreground mt-2">
-                        Sold Out
+                        {UNAVAILABLE_LABEL}
                       </p>
                     )}
                   </div>
@@ -124,7 +124,7 @@ export function FeaturedProducts() {
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No Image</div>
                         )}
-                        {soldOut && <SoldOutBadge />}
+                        {soldOut && <UnavailableBadge />}
                         <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                       </div>
                       <div className="space-y-2">
@@ -137,7 +137,7 @@ export function FeaturedProducts() {
                         </p>
                         {soldOut && (
                           <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                            Sold Out
+                            {UNAVAILABLE_LABEL}
                           </p>
                         )}
                       </div>

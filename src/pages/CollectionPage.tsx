@@ -7,7 +7,7 @@ import { ProductCard } from '../components/products/ProductCard';
 import { useDocumentHead } from '../hooks/useDocumentHead';
 import { useProducts, getProductUrl } from '../hooks/useProducts';
 import { useGender } from '../context/GenderContext';
-import { isProductSoldOut } from '../lib/stock';
+import { isProductSoldOut, UNAVAILABLE_LABEL } from '../lib/stock';
 export function CollectionPage() {
   const { slug } = useParams<{
     slug: string;
@@ -192,7 +192,7 @@ export function CollectionPage() {
               </p>
               {heroSoldOut && (
                 <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
-                  Sold Out
+                  {UNAVAILABLE_LABEL}
                 </p>
               )}
               <div
@@ -204,7 +204,7 @@ export function CollectionPage() {
               className="inline-flex items-center gap-4 text-sm tracking-[0.2em] uppercase group/link w-fit">
               
                 <span className="border-b border-foreground pb-1 group-hover/link:border-primary transition-colors">
-                  {heroSoldOut ? 'View details — sold out' : 'View Details'}
+                  {heroSoldOut ? 'Save to wishlist' : 'View Details'}
                 </span>
                 <ArrowRightIcon
                 className="w-4 h-4 group-hover/link:translate-x-2 transition-transform text-primary"

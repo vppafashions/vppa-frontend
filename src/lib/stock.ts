@@ -18,6 +18,12 @@ export interface ProductStockFields {
   variantInventory?: VariantInventoryItem[];
 }
 
+/** Prestige-facing label for empty inventory (prefer over "Sold Out"). */
+export const UNAVAILABLE_LABEL = 'Unavailable';
+export const UNAVAILABLE_HEADLINE = 'Currently unavailable';
+export const UNAVAILABLE_WISHLIST_HINT =
+  'This piece is currently unavailable. Save it to your wishlist — we will keep it close for when it returns.';
+
 const API_BASE = import.meta.env.VITE_API_BASE || '';
 
 /**
