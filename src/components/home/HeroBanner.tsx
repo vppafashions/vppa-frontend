@@ -339,25 +339,22 @@ function HeroPanel({
 export function HeroBanner() {
   const { setGender } = useGender();
   const [paused, setPaused] = useState(false);
+  // Fetch the full gender catalogs once so category rotation never paints
+  // the previous collection's products while the next request is in flight.
+  const { products: womenProducts, loading: womenLoading } = useProducts({
+    gender: 'women',
+  });
+  const { products: menProducts, loading: menLoading } = useProducts({
+    gender: 'men',
+  });
+  const catalogsReady = !womenLoading && !menLoading;
   const { index: categoryIndex, goTo: goToCategory } = useRotatingIndex(
     HERO_CATEGORIES.length,
     ROTATE_MS,
-    paused
+    paused || !catalogsReady
   );
   const activeCategorySlug = HERO_CATEGORIES[categoryIndex];
   const activeCategory = collections.find((collection) => collection.slug === activeCategorySlug);
-  const activeCategoryName = activeCategory?.name || 'Presence';
-  const activeCategoryRoute = `/collection/${activeCategorySlug}`;
-  const { products: womenProducts, loading: womenLoading } = useProducts({
-    collection: activeCategorySlug,
-    gender: 'women',
-    limit: 16,
-  });
-  const { products: menProducts, loading: menLoading } = useProducts({
-    collection: activeCategorySlug,
-    gender: 'men',
-    limit: 16,
-  });
 
   const womenGroups = useMemo(
     () => chunkIntoGroups(buildCategoryLooks(womenProducts, activeCategorySlug, 12)),
@@ -368,10 +365,83 @@ export function HeroBanner() {
     [activeCategorySlug, menProducts]
   );
 
-  const womenGroup = womenGroups[0];
-  const menGroup = menGroups[0];
-  const loading =
-    (womenLoading || menLoading) && !womenGroups[0] && !menGroups[0];
+  const nextWomenGroup = womenGroups[0];
+  const nextMenGroup = menGroups[0];
+  const [displayed, setDisplayed] = useState<{
+    slug: (typeof HERO_CATEGORIES)[number];
+    womenGroup?: LookGroup;
+    menGroup?: LookGroup;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!catalogsReady) return;
+    HERO_CATEGORIES.forEach((slug) => {
+      const women = buildCategoryLooks(womenProducts, slug, 2);
+      const men = buildCategoryLooks(menProducts, slug, 2);
+      [women[0]?.image, women[1]?.image, men[0]?.image, men[1]?.image].forEach((url) => {
+        if (!url) return;
+        const img = new Image();
+        img.src = optimizeCloudinaryUrl(url, HERO_W);
+      });
+    });
+  }, [catalogsReady, womenProducts, menProducts]);
+
+  useEffect(() => {
+    if (!nextWomenGroup && !nextMenGroup) {
+      if (catalogsReady) {
+        setDisplayed({ slug: activeCategorySlug });
+      }
+      return;
+    }
+
+    let cancelled = false;
+    const urls = [nextWomenGroup?.main.image, nextMenGroup?.main.image].filter(
+      (url): url is string => Boolean(url)
+    );
+
+    const commit = () => {
+      if (cancelled) return;
+      setDisplayed({
+        slug: activeCategorySlug,
+        womenGroup: nextWomenGroup,
+        menGroup: nextMenGroup,
+      });
+    };
+
+    if (urls.length === 0) {
+      commit();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    let remaining = urls.length;
+    urls.forEach((url) => {
+      const img = new Image();
+      const done = () => {
+        remaining -= 1;
+        if (remaining === 0) commit();
+      };
+      img.onload = done;
+      img.onerror = done;
+      img.src = optimizeCloudinaryUrl(url, HERO_W);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeCategorySlug, catalogsReady, nextWomenGroup, nextMenGroup]);
+
+  const womenGroup = displayed?.womenGroup;
+  const menGroup = displayed?.menGroup;
+  const displayedCategory =
+    collections.find((collection) => collection.slug === displayed?.slug) || activeCategory;
+  const displayedCategoryName = displayedCategory?.name || 'Presence';
+  const displayedCategoryRoute = `/collection/${displayed?.slug || activeCategorySlug}`;
+  const displayedIndex = displayed
+    ? HERO_CATEGORIES.indexOf(displayed.slug)
+    : categoryIndex;
+  const loading = !displayed;
 
   return (
     <section className="relative min-h-[100svh] w-full overflow-hidden bg-[#0a1228] text-white">
@@ -436,13 +506,13 @@ export function HeroBanner() {
       >
         <HeroPanel
           group={womenGroup}
-          groupIndex={categoryIndex}
+          groupIndex={displayedIndex < 0 ? categoryIndex : displayedIndex}
           groupCount={HERO_CATEGORIES.length}
           onSelectGroup={goToCategory}
           label="For Her"
-          sublabel={activeCategoryName}
+          sublabel={displayedCategoryName}
           cta="Shop Women"
-          to={activeCategoryRoute}
+          to={displayedCategoryRoute}
           onNavigate={() => setGender('women')}
           align="left"
           delayClass="hero-fade-up hero-delay-1"
@@ -450,13 +520,13 @@ export function HeroBanner() {
         />
         <HeroPanel
           group={menGroup}
-          groupIndex={categoryIndex}
+          groupIndex={displayedIndex < 0 ? categoryIndex : displayedIndex}
           groupCount={HERO_CATEGORIES.length}
           onSelectGroup={goToCategory}
           label="For Him"
-          sublabel={activeCategoryName}
+          sublabel={displayedCategoryName}
           cta="Shop Men"
-          to={activeCategoryRoute}
+          to={displayedCategoryRoute}
           onNavigate={() => setGender('men')}
           align="right"
           delayClass="hero-fade-up hero-delay-2"

@@ -3,14 +3,16 @@ import { Link } from 'react-router-dom';
 import { collections, getGenderedCollection, type Collection } from '../../data/collections';
 import { useGender } from '../../context/GenderContext';
 import { useProducts } from '../../hooks/useProducts';
+import type { Product } from '../../data/products';
 
-// Pulls the newest product image for a given collection+gender from Appwrite,
-// falling back to the static `image` defined in collections.ts when the API
-// returns nothing (offline, empty collection, etc).
-function useCollectionHeroImage(slug: string, gender: 'men' | 'women', fallback: string) {
-  const { products } = useProducts({ collection: slug, gender, limit: 1 });
-  const image = products[0]?.images?.[0];
-  return image || fallback;
+function collectionBaseSlug(slug: string): string {
+  return slug.replace(/_men$|_women$/, '');
+}
+
+function productImageForCollection(products: Product[], slug: string): string | undefined {
+  return products.find((product) => {
+    return collectionBaseSlug(product.collectionSlug) === slug && product.images?.[0];
+  })?.images?.[0];
 }
 
 // Full-bleed cinematic chapter section. Image fills the section, text overlaid.
@@ -22,12 +24,14 @@ function ChapterSection({
   collection: Collection;
 }) {
   return (
-    <section className="w-full h-[55vh] md:h-screen relative overflow-hidden group border-b border-border/30">
-      <img
-        src={collection.image}
-        alt={collection.name}
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-      />
+    <section className="w-full h-[55vh] md:h-screen relative overflow-hidden group border-b border-border/30 bg-black">
+      {collection.image ? (
+        <img
+          src={collection.image}
+          alt={collection.name}
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+        />
+      ) : null}
       <div className="absolute inset-0 bg-black/50" />
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white p-4">
         <span className="text-xs tracking-[0.4em] uppercase text-primary mb-3 md:mb-8">
@@ -60,24 +64,27 @@ function ChapterDivider() {
 
 export function CollectionShowcase() {
   const { gender } = useGender();
+  const { products, loading } = useProducts({ gender });
   const [velocityBase, presenceBase, powerBase, attitudeBase] = collections.map((c) =>
     getGenderedCollection(c, gender)
   );
+  const imageFor = (slug: string, fallback: string) =>
+    productImageForCollection(products, slug) || (loading ? '' : fallback);
   const velocity: Collection = {
     ...velocityBase,
-    image: useCollectionHeroImage('velocity', gender, velocityBase.image),
+    image: imageFor('velocity', velocityBase.image),
   };
   const presence: Collection = {
     ...presenceBase,
-    image: useCollectionHeroImage('presence', gender, presenceBase.image),
+    image: imageFor('presence', presenceBase.image),
   };
   const power: Collection = {
     ...powerBase,
-    image: useCollectionHeroImage('power', gender, powerBase.image),
+    image: imageFor('power', powerBase.image),
   };
   const attitude: Collection = {
     ...attitudeBase,
-    image: useCollectionHeroImage('attitude', gender, attitudeBase.image),
+    image: imageFor('attitude', attitudeBase.image),
   };
   return (
     <div id="collections" className="w-full bg-background scroll-mt-20">

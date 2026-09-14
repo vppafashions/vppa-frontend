@@ -5,6 +5,7 @@ const API_BASE = '/api/products';
 
 // Simple in-memory cache
 const cache: Record<string, { data: Product[]; timestamp: number }> = {};
+const inflight: Record<string, Promise<Product[]>> = {};
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 function getCached(key: string): Product[] | null {
@@ -19,6 +20,40 @@ function setCache(key: string, data: Product[]) {
   cache[key] = { data, timestamp: Date.now() };
 }
 
+function buildProductsUrl(options: {
+  collection?: string;
+  featured?: boolean;
+  limit?: number;
+  gender?: string;
+}): string {
+  const params = new URLSearchParams();
+  if (options.collection) params.set('collection', options.collection);
+  if (options.featured) params.set('featured', 'true');
+  if (options.limit) params.set('limit', String(options.limit));
+  if (options.gender) params.set('gender', options.gender);
+  return `${API_BASE}${params.toString() ? `?${params}` : ''}`;
+}
+
+function fetchProductsList(cacheKey: string, url: string): Promise<Product[]> {
+  if (!inflight[cacheKey]) {
+    inflight[cacheKey] = (async () => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) {
+          throw new Error(`Failed to fetch products: ${res.status}`);
+        }
+        const data = await res.json();
+        const fetchedProducts: Product[] = data.products || [];
+        setCache(cacheKey, fetchedProducts);
+        return fetchedProducts;
+      } finally {
+        delete inflight[cacheKey];
+      }
+    })();
+  }
+  return inflight[cacheKey];
+}
+
 interface UseProductsOptions {
   collection?: string;
   featured?: boolean;
@@ -27,48 +62,44 @@ interface UseProductsOptions {
 }
 
 export function useProducts(options: UseProductsOptions = {}) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const { collection, featured, limit, gender } = options;
   const cacheKey = `products:${collection || 'all'}:${featured || ''}:${limit || ''}:${gender || ''}`;
+  const cached = getCached(cacheKey);
+
+  const [activeKey, setActiveKey] = useState(cacheKey);
+  const [products, setProducts] = useState<Product[]>(() => cached || []);
+  const [loading, setLoading] = useState(() => !cached);
+  const [error, setError] = useState<string | null>(null);
+
+  // Never render the previous query's products while a new collection/gender is loading.
+  const resolvedProducts = activeKey === cacheKey ? products : cached || [];
+  const resolvedLoading = activeKey === cacheKey ? loading : !cached;
 
   useEffect(() => {
     let cancelled = false;
 
-    async function fetchProducts() {
-      // Check cache first
-      const cached = getCached(cacheKey);
-      if (cached) {
-        setProducts(cached);
+    async function load() {
+      const fromCache = getCached(cacheKey);
+      if (fromCache) {
+        setProducts(fromCache);
+        setActiveKey(cacheKey);
         setLoading(false);
+        setError(null);
         return;
       }
 
+      setProducts([]);
+      setActiveKey(cacheKey);
       setLoading(true);
       setError(null);
 
       try {
-        const params = new URLSearchParams();
-        if (collection) params.set('collection', collection);
-        if (featured) params.set('featured', 'true');
-        if (limit) params.set('limit', String(limit));
-        if (gender) params.set('gender', gender);
-
-        const url = `${API_BASE}${params.toString() ? `?${params}` : ''}`;
-        const res = await fetch(url);
-
-        if (!res.ok) {
-          throw new Error(`Failed to fetch products: ${res.status}`);
-        }
-
-        const data = await res.json();
-        const fetchedProducts: Product[] = data.products || [];
-
+        const fetchedProducts = await fetchProductsList(
+          cacheKey,
+          buildProductsUrl({ collection, featured, limit, gender })
+        );
         if (!cancelled) {
           setProducts(fetchedProducts);
-          setCache(cacheKey, fetchedProducts);
           setLoading(false);
         }
       } catch (err) {
@@ -79,14 +110,14 @@ export function useProducts(options: UseProductsOptions = {}) {
       }
     }
 
-    fetchProducts();
+    load();
 
     return () => {
       cancelled = true;
     };
   }, [cacheKey, collection, featured, limit, gender]);
 
-  return { products, loading, error };
+  return { products: resolvedProducts, loading: resolvedLoading, error };
 }
 
 // Single product by ID — checks cache first, then fetches

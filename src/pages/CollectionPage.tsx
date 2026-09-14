@@ -27,11 +27,12 @@ export function CollectionPage() {
     // In-stock first; sold-out demoted to the end.
     return [...list].sort((a, b) => Number(isProductSoldOut(a)) - Number(isProductSoldOut(b)));
   }, [apiProducts, loading, slug]);
-  // Prefer an in-stock product image for the cinematic hero when available.
+  // Prefer an in-stock product image. Do not paint the static Unsplash
+  // fallback until the request finishes, or it flashes over the real photo.
   const heroImage =
     collectionProducts.find((p) => !isProductSoldOut(p))?.images?.[0] ||
     collectionProducts[0]?.images?.[0] ||
-    collection?.image;
+    (loading ? undefined : collection?.image);
   // Determine next collection for the teaser
   const nextCollectionIndex = (collectionIndex + 1) % collections.length;
   const nextCollection = getGenderedCollection(collections[nextCollectionIndex], gender);
@@ -97,10 +98,12 @@ export function CollectionPage() {
       {/* 1. Cinematic Hero */}
       <div className="relative h-[85vh] md:h-screen w-full overflow-hidden bg-black">
         <div className="absolute inset-0">
-          <img
-            src={heroImage}
-            alt={collection.name}
-            className="w-full h-full object-cover object-center opacity-80" />
+          {heroImage ? (
+            <img
+              src={heroImage}
+              alt={collection.name}
+              className="w-full h-full object-cover object-center opacity-80" />
+          ) : null}
           
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
         </div>
