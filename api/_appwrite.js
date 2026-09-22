@@ -34,6 +34,7 @@ const Query = {
   equal: (attribute, values) => JSON.stringify({ method: 'equal', attribute, values: Array.isArray(values) ? values : [values] }),
   notEqual: (attribute, values) => JSON.stringify({ method: 'notEqual', attribute, values: Array.isArray(values) ? values : [values] }),
   limit: (value) => JSON.stringify({ method: 'limit', values: [value] }),
+  offset: (value) => JSON.stringify({ method: 'offset', values: [value] }),
   orderDesc: (attribute) => JSON.stringify({ method: 'orderDesc', attribute, values: [] }),
   orderAsc: (attribute) => JSON.stringify({ method: 'orderAsc', attribute, values: [] }),
 };
