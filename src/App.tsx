@@ -25,7 +25,6 @@ import { TermsPage } from './pages/TermsPage';
 import { ShippingReturnsPage } from './pages/ShippingReturnsPage';
 import { FAQPage } from './pages/FAQPage';
 import { NotFoundPage } from './pages/NotFoundPage';
-import { PricingPage } from './pages/PricingPage';
 import { Analytics } from './components/Analytics';
 import { CookieConsent } from './components/seo/CookieConsent';
 export function App() {
@@ -58,7 +57,6 @@ export function App() {
                 <Route path="/terms" element={<TermsPage />} />
                 <Route path="/shipping-returns" element={<ShippingReturnsPage />} />
                 <Route path="/faq" element={<FAQPage />} />
-                <Route path="/admin/pricing" element={<PricingPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </div>
