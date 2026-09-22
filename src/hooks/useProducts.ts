@@ -7,6 +7,20 @@ const API_BASE = '/api/products';
 const cache: Record<string, { data: Product[]; timestamp: number }> = {};
 const inflight: Record<string, Promise<Product[]>> = {};
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const productCache: Record<string, { data: Product; timestamp: number }> = {};
+const slugCache: Record<string, { data: Product; timestamp: number }> = {};
+
+function normalizeSlug(slug: string | undefined): string {
+  return slug ? `/${slug.replace(/^\/+/, '')}` : '';
+}
+
+function cacheProduct(product: Product) {
+  const timestamp = Date.now();
+  productCache[product.id] = { data: product, timestamp };
+  if (product.slug) {
+    slugCache[normalizeSlug(product.slug)] = { data: product, timestamp };
+  }
+}
 
 function getCached(key: string): Product[] | null {
   const entry = cache[key];
@@ -45,6 +59,7 @@ function fetchProductsList(cacheKey: string, url: string): Promise<Product[]> {
         const data = await res.json();
         const fetchedProducts: Product[] = data.products || [];
         setCache(cacheKey, fetchedProducts);
+        fetchedProducts.forEach(cacheProduct);
         return fetchedProducts;
       } finally {
         delete inflight[cacheKey];
@@ -120,9 +135,6 @@ export function useProducts(options: UseProductsOptions = {}) {
   return { products: resolvedProducts, loading: resolvedLoading, error };
 }
 
-// Single product by ID — checks cache first, then fetches
-const productCache: Record<string, { data: Product; timestamp: number }> = {};
-
 export function useProduct(id: string | undefined) {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -152,7 +164,7 @@ export function useProduct(id: string | undefined) {
           const found = entry.data.find((p) => p.id === id);
           if (found) {
             setProduct(found);
-            productCache[id!] = { data: found, timestamp: Date.now() };
+            cacheProduct(found);
             setLoading(false);
             return;
           }
@@ -172,7 +184,7 @@ export function useProduct(id: string | undefined) {
 
         if (!cancelled) {
           setProduct(fetchedProduct);
-          productCache[id!] = { data: fetchedProduct, timestamp: Date.now() };
+          cacheProduct(fetchedProduct);
           setLoading(false);
         }
       } catch (err) {
@@ -193,9 +205,6 @@ export function useProduct(id: string | undefined) {
   return { product, loading, error };
 }
 
-// Single product by slug
-const slugCache: Record<string, { data: Product; timestamp: number }> = {};
-
 export function useProductBySlug(slug: string | undefined) {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -211,7 +220,8 @@ export function useProductBySlug(slug: string | undefined) {
 
     async function fetchProduct() {
       // Check slug cache
-      const cached = slugCache[slug!];
+      const cacheKey = normalizeSlug(slug);
+      const cached = slugCache[cacheKey];
       if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
         setProduct(cached.data);
         setLoading(false);
@@ -222,10 +232,10 @@ export function useProductBySlug(slug: string | undefined) {
       for (const key of Object.keys(cache)) {
         const entry = cache[key];
         if (entry && Date.now() - entry.timestamp < CACHE_TTL) {
-          const found = entry.data.find((p) => p.slug === slug);
+          const found = entry.data.find((p) => normalizeSlug(p.slug) === cacheKey);
           if (found) {
             setProduct(found);
-            slugCache[slug!] = { data: found, timestamp: Date.now() };
+            cacheProduct(found);
             setLoading(false);
             return;
           }
@@ -245,7 +255,7 @@ export function useProductBySlug(slug: string | undefined) {
 
         if (!cancelled) {
           setProduct(fetchedProduct);
-          slugCache[slug!] = { data: fetchedProduct, timestamp: Date.now() };
+          cacheProduct(fetchedProduct);
           setLoading(false);
         }
       } catch (err) {

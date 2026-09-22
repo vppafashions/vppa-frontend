@@ -5,6 +5,7 @@ import { useGender } from '../../context/GenderContext';
 import { products as fallbackProducts } from '../../data/products';
 import { isProductSoldOut, UNAVAILABLE_LABEL } from '../../lib/stock';
 import type { Product } from '../../data/products';
+import { ProductPrice } from '../products/ProductPrice';
 
 function pickEditProducts(allProducts: Product[], count: number): Product[] {
   const withImages = allProducts.filter((p) => p.images && p.images.length > 0);
@@ -98,9 +99,11 @@ export function FeaturedProducts() {
                       </p>
                     )}
                   </div>
-                  <p className="text-lg font-light">
-                    ₹{heroProduct.price.toLocaleString('en-IN')}
-                  </p>
+                  <ProductPrice
+                    price={heroProduct.price}
+                    originalPrice={heroProduct.originalPrice}
+                    priceClassName="text-lg font-light"
+                  />
                 </div>
               </Link>
             </div>
@@ -132,9 +135,12 @@ export function FeaturedProducts() {
                           {product.collectionSlug}
                         </p>
                         <h3 className="font-magazine text-2xl">{product.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          ₹{product.price.toLocaleString('en-IN')}
-                        </p>
+                        <ProductPrice
+                          price={product.price}
+                          originalPrice={product.originalPrice}
+                          className="text-muted-foreground"
+                          priceClassName="text-sm"
+                        />
                         {soldOut && (
                           <p className="text-xs uppercase tracking-widest text-muted-foreground">
                             {UNAVAILABLE_LABEL}

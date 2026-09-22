@@ -22,6 +22,7 @@ import { useDocumentHead } from '../hooks/useDocumentHead';
 import { ProductJsonLd } from '../components/seo/ProductJsonLd';
 import { BreadcrumbJsonLd } from '../components/seo/BreadcrumbJsonLd';
 import { SocialShare } from '../components/seo/SocialShare';
+import { ProductPrice } from '../components/products/ProductPrice';
 export function ProductPage() {
   const { id, gender, type, productSlug } = useParams<{
     id: string;
@@ -246,9 +247,11 @@ export function ProductPage() {
                   </span>
                 </a>
               )}
-              <p className="text-2xl font-light">
-                ₹{product.price.toLocaleString('en-IN')}
-              </p>
+              <ProductPrice
+                price={product.price}
+                originalPrice={product.originalPrice}
+                priceClassName="text-2xl font-light"
+              />
               {isSoldOut && (
                 <p className="mt-3 text-sm uppercase tracking-widest text-muted-foreground">
                   {UNAVAILABLE_HEADLINE}

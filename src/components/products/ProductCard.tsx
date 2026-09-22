@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Product } from '../../data/products';
 import { getProductUrl } from '../../hooks/useProducts';
 import { isProductSoldOut, UNAVAILABLE_LABEL } from '../../lib/stock';
+import { ProductPrice } from './ProductPrice';
 
 interface ProductCardProps {
   product: Product;
@@ -38,9 +39,12 @@ export function ProductCard({ product }: ProductCardProps) {
           {product.collectionSlug}
         </p>
         <h3 className="font-serif text-lg text-foreground">{product.name}</h3>
-        <p className="text-sm text-muted-foreground">
-          ₹{product.price.toLocaleString('en-IN')}
-        </p>
+        <ProductPrice
+          price={product.price}
+          originalPrice={product.originalPrice}
+          className="justify-center text-muted-foreground"
+          priceClassName="text-sm"
+        />
         {unavailable && (
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
             {UNAVAILABLE_LABEL}

@@ -8,6 +8,7 @@ import { useDocumentHead } from '../hooks/useDocumentHead';
 import { useProducts, getProductUrl } from '../hooks/useProducts';
 import { useGender } from '../context/GenderContext';
 import { isProductSoldOut, UNAVAILABLE_LABEL } from '../lib/stock';
+import { ProductPrice } from '../components/products/ProductPrice';
 export function CollectionPage() {
   const { slug } = useParams<{
     slug: string;
@@ -190,9 +191,12 @@ export function CollectionPage() {
               <h3 className="font-magazine italic text-3xl md:text-6xl mb-3 md:mb-6 font-light leading-none">
                 {heroProduct.name}
               </h3>
-              <p className="text-xl md:text-2xl font-light mb-2">
-                ₹{heroProduct.price.toLocaleString('en-IN')}
-              </p>
+              <ProductPrice
+                price={heroProduct.price}
+                originalPrice={heroProduct.originalPrice}
+                className="mb-2"
+                priceClassName="text-xl md:text-2xl font-light"
+              />
               {heroSoldOut && (
                 <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
                   {UNAVAILABLE_LABEL}
