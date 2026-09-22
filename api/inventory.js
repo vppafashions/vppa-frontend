@@ -7,6 +7,8 @@
 //   POST /api/inventory?action=reviews
 //   POST /api/inventory?action=reviews&setup=1   (admin-only)
 //   DELETE /api/inventory?action=reviews         (admin-only)
+//   GET  /api/inventory?action=pricing            (admin-only)
+//   POST /api/inventory?action=pricing            (admin-only)
 
 import {
   corsHeaders,
@@ -14,6 +16,7 @@ import {
   getDocument,
   createDocument,
   deleteDocument,
+  updateDocument,
   COLLECTION_IDS,
   Query,
 } from './_appwrite.js';
@@ -23,6 +26,9 @@ const APPWRITE_PROJECT_ID = process.env.APPWRITE_PROJECT_ID || '69aaa3a900228aff
 const APPWRITE_API_KEY = process.env.APPWRITE_API_KEY;
 const DATABASE_ID = process.env.APPWRITE_DATABASE_ID || '69aaa3c3001805a8a9ef';
 const REVIEWS_ADMIN_SECRET = process.env.REVIEWS_ADMIN_SECRET || APPWRITE_API_KEY;
+const PRICING_ADMIN_SECRET = process.env.PRICING_ADMIN_SECRET || '';
+const PRICING_PAGE_SIZE = 100;
+const PRICING_MAX_PRODUCTS = 10000;
 
 function parseVariantInventory(raw) {
   if (!raw) return [];
@@ -56,10 +62,12 @@ export default async function handler(req, res) {
     return handleStock(req, res);
   } else if (action === 'size-guide') {
     return handleSizeGuide(req, res);
+  } else if (action === 'pricing') {
+    return handlePricing(req, res);
   } else if (action === 'reviews') {
     return handleReviews(req, res);
   } else {
-    return res.status(400).json({ error: 'Invalid action. Use ?action=stock | size-guide | reviews' });
+    return res.status(400).json({ error: 'Invalid action. Use ?action=stock | size-guide | pricing | reviews' });
   }
 }
 
@@ -139,6 +147,192 @@ async function handleSizeGuide(req, res) {
   } catch (error) {
     console.error('Size guide API error:', error);
     return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+}
+
+// ----- Pricing CSV -----
+
+function pricingProvidedSecret(req) {
+  const value = req.headers['x-pricing-admin-secret'];
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function authorizePricing(req, res) {
+  if (!PRICING_ADMIN_SECRET) {
+    res.status(503).json({ error: 'Pricing management is not configured on the server.' });
+    return false;
+  }
+
+  if (pricingProvidedSecret(req) !== PRICING_ADMIN_SECRET) {
+    res.status(401).json({ error: 'Invalid pricing management secret.' });
+    return false;
+  }
+
+  return true;
+}
+
+async function listAllPricingProducts() {
+  const documents = [];
+  let offset = 0;
+
+  while (offset < PRICING_MAX_PRODUCTS) {
+    const result = await listDocuments(COLLECTION_IDS.products, [
+      Query.limit(PRICING_PAGE_SIZE),
+      Query.offset(offset),
+    ]);
+    const page = result.documents || [];
+    documents.push(...page);
+
+    if (page.length < PRICING_PAGE_SIZE || (typeof result.total === 'number' && documents.length >= result.total)) {
+      break;
+    }
+    offset += page.length;
+  }
+
+  return documents;
+}
+
+function pricingNumber(value, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function pricingText(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function pricingCode(value) {
+  return pricingText(value).toLowerCase();
+}
+
+function pricingGender(value) {
+  const gender = pricingText(value).toLowerCase();
+  return gender ? `${gender.charAt(0).toUpperCase()}${gender.slice(1)}` : '';
+}
+
+function pricingCollection(value) {
+  return pricingText(value).replace(/_men$|_women$/i, '').toLowerCase();
+}
+
+function pricingRow(document) {
+  return {
+    productId: document.$id,
+    itemCode: pricingText(document.itemCode),
+    productName: pricingText(document.name),
+    gender: pricingGender(document.gender),
+    collection: pricingCollection(document.collectionSlug),
+    sellingPrice: pricingNumber(document.price),
+    mrp: pricingNumber(document.originalPrice ?? document.price),
+  };
+}
+
+function pricingPrice(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+async function handlePricing(req, res) {
+  if (!authorizePricing(req, res)) return;
+
+  try {
+    if (req.method === 'GET') {
+      const documents = await listAllPricingProducts();
+      const products = documents
+        .map(pricingRow)
+        .sort((a, b) => a.itemCode.localeCompare(b.itemCode, undefined, { numeric: true, sensitivity: 'base' }));
+
+      res.setHeader('Cache-Control', 'no-store, max-age=0');
+      return res.status(200).json({ products, total: products.length });
+    }
+
+    if (req.method === 'POST') {
+      const updates = req.body?.updates;
+      if (!Array.isArray(updates) || updates.length === 0) {
+        return res.status(400).json({ error: 'A non-empty updates array is required.' });
+      }
+      if (updates.length > PRICING_MAX_PRODUCTS) {
+        return res.status(400).json({ error: `A maximum of ${PRICING_MAX_PRODUCTS} rows can be uploaded at once.` });
+      }
+
+      const documents = await listAllPricingProducts();
+      const byId = new Map(documents.map((document) => [document.$id, document]));
+      const byItemCode = new Map();
+      documents.forEach((document) => {
+        const key = pricingCode(document.itemCode);
+        if (!key) return;
+        const matches = byItemCode.get(key) || [];
+        matches.push(document);
+        byItemCode.set(key, matches);
+      });
+
+      const errors = [];
+      const seen = new Set();
+      const resolvedIds = new Set();
+      const resolvedUpdates = [];
+
+      updates.forEach((update, index) => {
+        const rowNumber = index + 2;
+        const productId = pricingText(update?.productId);
+        const itemCode = pricingText(update?.itemCode);
+        const sellingPrice = pricingPrice(update?.sellingPrice);
+        const mrp = pricingPrice(update?.mrp);
+        const lookupKey = productId ? `id:${productId}` : `code:${pricingCode(itemCode)}`;
+        const rowErrors = [];
+
+        if (!productId && !itemCode) rowErrors.push('Product ID or Item Code is required.');
+        if (sellingPrice === null) rowErrors.push('Selling Price must be a non-negative number.');
+        if (mrp === null) rowErrors.push('MRP must be a non-negative number.');
+        if (sellingPrice !== null && mrp !== null && sellingPrice > mrp) {
+          rowErrors.push('Selling Price cannot be greater than MRP.');
+        }
+        if (seen.has(lookupKey)) rowErrors.push('The same product appears more than once.');
+        seen.add(lookupKey);
+
+        let document = productId ? byId.get(productId) : undefined;
+        if (!document && itemCode) {
+          const matches = byItemCode.get(pricingCode(itemCode)) || [];
+          if (matches.length > 1) rowErrors.push('Item Code matches more than one product.');
+          if (matches.length === 1) document = matches[0];
+        }
+
+        if (!document) rowErrors.push('No product matched this Product ID or Item Code.');
+        if (document && productId && itemCode && pricingCode(document.itemCode) !== pricingCode(itemCode)) {
+          rowErrors.push('Product ID and Item Code refer to different products.');
+        }
+        if (document && resolvedIds.has(document.$id)) rowErrors.push('The same product appears more than once.');
+
+        if (rowErrors.length > 0) {
+          errors.push(`Row ${rowNumber}: ${rowErrors.join(' ')}`);
+          return;
+        }
+
+        resolvedIds.add(document.$id);
+        resolvedUpdates.push({ document, sellingPrice, mrp });
+      });
+
+      if (errors.length > 0) {
+        return res.status(400).json({
+          error: 'No prices were updated. Fix the CSV and upload it again.',
+          details: errors,
+        });
+      }
+
+      let updatedCount = 0;
+      for (const update of resolvedUpdates) {
+        await updateDocument(COLLECTION_IDS.products, update.document.$id, {
+          price: update.sellingPrice,
+          originalPrice: update.mrp,
+        });
+        updatedCount += 1;
+      }
+
+      return res.status(200).json({ success: true, updatedCount });
+    }
+
+    return res.status(405).json({ error: 'Method not allowed' });
+  } catch (error) {
+    console.error('Pricing API error:', error);
+    return res.status(500).json({ error: error.message || 'Pricing management failed.' });
   }
 }
 
