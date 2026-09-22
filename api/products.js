@@ -9,6 +9,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Product prices can be changed in the back office and must update consistently
+  // on collection and product-detail pages.
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+
   try {
     const { id, slug, collection, featured, limit: limitParam, gender } = req.query;
 
@@ -83,8 +87,6 @@ export default async function handler(req, res) {
       .filter((doc) => doc.displayOnCollectionPage !== false)
       .map((doc) => transformProduct(doc, extrasMap[doc.$id]));
 
-    // Set cache headers — revalidate every 5 minutes
-    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
     return res.status(200).json({ products, total: products.length });
   } catch (error) {
     console.error('Products API error:', error);

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import type { Product } from '../data/products';
 
 const API_BASE = '/api/products';
@@ -6,7 +6,7 @@ const API_BASE = '/api/products';
 // Simple in-memory cache
 const cache: Record<string, { data: Product[]; timestamp: number }> = {};
 const inflight: Record<string, Promise<Product[]>> = {};
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 30 * 1000; // 30 seconds
 const productCache: Record<string, { data: Product; timestamp: number }> = {};
 const slugCache: Record<string, { data: Product; timestamp: number }> = {};
 
@@ -52,7 +52,7 @@ function fetchProductsList(cacheKey: string, url: string): Promise<Product[]> {
   if (!inflight[cacheKey]) {
     inflight[cacheKey] = (async () => {
       try {
-        const res = await fetch(url);
+        const res = await fetch(url, { cache: 'no-store' });
         if (!res.ok) {
           throw new Error(`Failed to fetch products: ${res.status}`);
         }
@@ -175,7 +175,7 @@ export function useProduct(id: string | undefined) {
       setError(null);
 
       try {
-        const res = await fetch(`${API_BASE}?id=${id}`);
+        const res = await fetch(`${API_BASE}?id=${id}`, { cache: 'no-store' });
         if (!res.ok) {
           throw new Error(`Product not found: ${res.status}`);
         }
@@ -246,7 +246,9 @@ export function useProductBySlug(slug: string | undefined) {
       setError(null);
 
       try {
-        const res = await fetch(`${API_BASE}?slug=${encodeURIComponent(slug)}`);
+        const res = await fetch(`${API_BASE}?slug=${encodeURIComponent(slug)}`, {
+          cache: 'no-store',
+        });
         if (!res.ok) {
           throw new Error(`Product not found: ${res.status}`);
         }
